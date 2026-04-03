@@ -1,0 +1,29 @@
+.codex
+
+# Dependencies
+node_modules/
+Client/node_modules/
+Server/node_modules/
+
+# Environment files
+.env
+.env.*
+Client/.env
+Client/.env.*
+Server/.env
+Server/.env.*
+!.env.example
+!Client/.env.example
+!Server/.env.example
+
+# Build output
+dist/
+build/
+coverage/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+
+# OS / logs
+.DS_Store
+*.log
