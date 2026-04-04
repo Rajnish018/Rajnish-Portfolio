@@ -7,7 +7,7 @@ import {
 } from "../controllers/admin.controller";
 
 import { protect } from "../middleware/auth.middleware";
-import { upload } from "@/middleware/multer.middleware";
+import { upload } from "../middleware/multer.middleware";
 
 const router = express.Router();
 

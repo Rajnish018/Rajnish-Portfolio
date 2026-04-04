@@ -3,6 +3,7 @@ import mongoose, { Schema, Document } from "mongoose";
 /* ------------------ Types ------------------ */
 
 export interface ISkill {
+  _id?: string;
   name: string;
   level: number;
 }

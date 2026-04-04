@@ -7,8 +7,8 @@ import {
   deleteProject,
   UploadProject,
 } from "../controllers/project.controller";
-import { upload } from "@/middleware/multer.middleware";
-import { protect } from "@/middleware/auth.middleware";
+import { upload } from "../middleware/multer.middleware";
+import { protect } from "../middleware/auth.middleware";
 
 const router = express.Router();
 

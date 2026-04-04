@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import Project from "../models/project.model";
-import { uploadToCloudinary } from "@/utils/cloudinaryHandler";
+import { uploadToCloudinary } from "../utils/cloudinaryHandler";
 
 const normalizeProjectPayload = (body: Record<string, any>) => {
   const title = typeof body.title === "string" ? body.title.trim() : "";
@@ -131,4 +131,3 @@ export const UploadProject = async (req: any, res: Response) => {
     res.status(500).json({ message: "Server error during upload" });
   }
 };
-

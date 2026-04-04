@@ -71,7 +71,7 @@ export const addSkillToCategory = async (req: Request, res: Response) => {
     if (!skills) return res.status(404).json({ message: "Not found" });
 
     // Find category by ID in the array
-    const category = skills.categories.id(categoryId);
+    const category = skills.categories.find(cat => cat._id?.toString() === categoryId);
     if (!category) return res.status(404).json({ message: "Category not found" });
 
     category.items.push({ name, level });
@@ -92,10 +92,10 @@ export const updateSkillInCategory = async (req: Request, res: Response) => {
     const skills = await Skill.findOne();
     if (!skills) return res.status(404).json({ message: "Not found" });
 
-    const category = skills.categories.id(categoryId);
+    const category = skills.categories.find(cat => cat._id?.toString() === categoryId);
     if (!category) return res.status(404).json({ message: "Category not found" });
 
-    const skill = category.items.id(skillId);
+    const skill = category.items.find(item => item._id?.toString() === skillId);
     if (!skill) return res.status(404).json({ message: "Skill not found" });
 
     // Apply updates
@@ -113,8 +113,6 @@ export const deleteSkill = async (req: Request, res: Response) => {
   try {
     const { categoryId, skillId } = req.params;
 
-
-
     // Validation check: If categoryId is "remove-category", something is wrong with route order
     if (!mongoose.Types.ObjectId.isValid(categoryId)) {
       return res.status(400).json({ message: "Invalid Category ID format" });
@@ -122,11 +120,11 @@ export const deleteSkill = async (req: Request, res: Response) => {
 
     const skills = await Skill.findOne();
     if (!skills) return res.status(404).json({ message: "Not found" });
-    
-    const category = skills.categories.id(categoryId);
+
+    const category = skills.categories.find(cat => cat._id?.toString() === categoryId);
     if (!category) return res.status(404).json({ message: "Category not found" });
 
-    category.items.pull({ _id: skillId });
+    category.items = category.items.filter(item => item._id?.toString() !== skillId);
     await skills.save();
     res.json(skills);
   } catch (err) {
@@ -154,7 +152,9 @@ export const deleteCategory = async (req: Request, res: Response) => {
     // console.log("===> Categories count before pull:", skills.categories.length);
 
     // 2. Perform the pull
-    skills.categories.pull({ _id: categoryId });
+    skills.categories = skills.categories.filter(
+      category => category._id?.toString() !== categoryId
+    );
     
     // 3. Save
     await skills.save();
