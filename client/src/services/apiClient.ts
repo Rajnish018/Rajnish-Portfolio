@@ -4,7 +4,7 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 const RENDER_SERVER_URL =
   import.meta.env.VITE_API_URL || "http://localhost:5000/api";
   
-console.log(RENDER_SERVER_URL)
+// console.log(RENDER_SERVER_URL)
 
 const apiClient = axios.create({
   baseURL: RENDER_SERVER_URL,
