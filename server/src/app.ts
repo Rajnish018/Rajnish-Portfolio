@@ -10,13 +10,18 @@ import analyticsRoutes from "./routes/analytics.routes";
 import uploadRoutes from "./routes/upload.routes";
 import adminRoutes from "./routes/admin.routes";
 import experienceRoutes from "./routes/experience.routes";
+import { ENV } from "./config/env";
 
 
 
 const app = express();
 
+const {VERCEL_FORNTEND_URL,LOCAL_FORNTEND_URL}=ENV;
+
+
+
 app.use(cors({
-    origin: 'http://localhost:5173', // Adjust this to your frontend URL
+    origin: VERCEL_FORNTEND_URL||LOCAL_FORNTEND_URL, // Adjust this to your frontend URL
     credentials: true,
 }));
 app.use(express.json());
