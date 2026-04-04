@@ -1,11 +1,13 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
-const API_BASE_URL ="http://localhost:5000/api";
 
-// console.log("API Base URL:", API_BASE_URL);
+const RENDER_SERVER_URL =
+  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+  
+console.log(RENDER_SERVER_URL)
 
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: RENDER_SERVER_URL,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
