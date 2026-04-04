@@ -53,7 +53,7 @@ export const logoutApi = async () => {
   const token = localStorage.getItem("token");
 
   try {
-    const response = await axios.post("http://localhost:5000/api/projects/upload", formData, {
+    const response = await axios.post(`${API_ENDPOINTS.SERVER.RENDER_SERVER_URL}`, formData, {
       headers: {
         "Authorization": `Bearer ${token}`,
         "Content-Type": "multipart/form-data",
@@ -76,7 +76,7 @@ export const uploadAvatarApi = async (file: File) => {
   const token = localStorage.getItem("token");
 
   // Create a one-time request without global interceptors
-  const res = await axios.post("http://localhost:5000/api/admin/upload-avatar", formData, {
+  const res = await axios.post(`${API_ENDPOINTS.SERVER.RENDER_SERVER_URL}api/admin/upload-avatar`, formData, {
     headers: {
       "Authorization": `Bearer ${token}`,
       "Content-Type": "multipart/form-data", 
@@ -109,6 +109,7 @@ export const changePasswordApi = async (data: ChangePasswordData) => {
 // -----------------------------
 export const getProjectsApi = async () => {
   const res = await apiClient.get(API_ENDPOINTS.PROJECTS.GET);
+  // console.log(res)
   return res.data;
 };
 

@@ -1,4 +1,9 @@
 export const API_ENDPOINTS = {
+  SERVER:{
+    LOCAL_SERVER_URL:"http://localhost:5000/api/",
+    RENDER_SERVER_URL:"",
+
+  },
   AUTH: {
     LOGIN: "/auth/login",
     REGISTER: "/auth/register",

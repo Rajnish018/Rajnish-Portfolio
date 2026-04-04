@@ -12,6 +12,7 @@ export const Projects: React.FC = () => {
     const fetchProjects = async () => {
       try {
         const response = await getProjectsApi();
+        // console.log("response",response)
         setProjects(response);
       } catch (error) {
         console.error("Error fetching projects:", error);
