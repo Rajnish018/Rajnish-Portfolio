@@ -42,55 +42,35 @@ export const logoutApi = async () => {
 };
 
 
+// upload Helper function
 
- export const uploadProjectImageApi = async (file: File): Promise<{ url: string }> => {
-  // 1. Create FormData object
+const uploadFile = async (
+  file: File,
+  type: "avatar" | "project"
+): Promise<{ url: string }> => {
   const formData = new FormData();
-  
-  // 2. Append the file. 
-  // Note: The key "image" must match what your backend expects (e.g., 'file', 'image', 'avatar')
-  formData.append("image", file);
-  const token = localStorage.getItem("token");
+  formData.append("file", file);
 
-  try {
-    const response = await axios.post(`${API_ENDPOINTS.SERVER.RENDER_SERVER_URL}/projects/upload`, formData, {
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    });
+  const response = await apiClient.post(
+    API_ENDPOINTS.UPLOAD.IMAGE(type),
+    formData
+  );
 
-    return response.data;
-  } catch (error) {
-    console.error("Upload API error:", error);
-    throw error;
-  }
+  return response.data;
 };
 
-export const uploadAvatarApi = async (file: File) => {
-  const formData = new FormData();
-  formData.append("avatar", file);
 
-  console.log("Uploading avatar:", file); // Debug log
+export const uploadAvatarApi = (file: File) => uploadFile(file, "avatar");
 
-  const token = localStorage.getItem("token");
+export const uploadProjectImageApi = (file: File) => uploadFile(file, "project");
 
-  // Create a one-time request without global interceptors
-  const res = await axios.post(`${API_ENDPOINTS.SERVER.RENDER_SERVER_URL}/admin/upload-avatar`, formData, {
-    headers: {
-      "Authorization": `Bearer ${token}`,
-      "Content-Type": "multipart/form-data", 
-    },
-  });
 
-  return res.data;
-};
+
 // -----------------------------
 // PROFILE (FIXED + ADDED)
 // -----------------------------
 export const getProfileApi = async () => {
   const res = await apiClient.get(API_ENDPOINTS.ADMIN.GET_PROFILE);
-  // console.log("API PROFILE:", res.data); // debug
   return res.data;
 };
 
@@ -129,10 +109,6 @@ export const deleteProjectApi = async (id: string) => {
 
 // -----------------------------
 // SKILLS (FIXED)
-// -----------------------------
-
-// -----------------------------
-// SKILLS (UPDATED TO ID-BASED)
 // -----------------------------
 
 // 🔹 Fetch all skills

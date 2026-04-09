@@ -1,17 +1,16 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
 
-const RENDER_SERVER_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+const RENDER_SERVER_URL =  import.meta.env.VITE_API_URL ||
+   "http://localhost:5000/api";
+
+  // 
   
 // console.log(RENDER_SERVER_URL)
 
 const apiClient = axios.create({
   baseURL: RENDER_SERVER_URL,
   timeout: 10000,
-  headers: {
-    "Content-Type": "application/json",
-  },
 });
 
 // REQUEST
@@ -21,6 +20,15 @@ apiClient.interceptors.request.use(
 
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    // Handle FormData automatically
+    
+    if (config.data instanceof FormData) {
+      // Let Axios set Content-Type automatically
+      delete config.headers["Content-Type"];
+    } else {
+      config.headers["Content-Type"] = "application/json";
     }
 
     return config;

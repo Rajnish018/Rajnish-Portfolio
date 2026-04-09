@@ -24,31 +24,30 @@ export const getProfile = async (req: any, res: Response) => {
 // ---------------- UPDATE PROFILE ----------------
 export const updateProfile = async (req: any, res: Response) => {
   try {
-    const userId = req.user.id;
+    const { name, email, existingAvatar } = req.body;
 
-    if(!userId) {
-      return res.status(401).json({ message: "Unauthorized" });
+    let avatar = existingAvatar;
+
+    if (req.file) {
+      const uploadRes = await uploadToCloudinary(
+        req.file.path,
+        "avatars"
+      );
+
+      if (uploadRes) avatar = uploadRes.url;
     }
 
-    const { name, email, avatar } = req.body;
-
-    if(!name || !email) {
-      return res.status(400).json({ message: "Name and email are required" });
-    } 
-
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
       { name, email, avatar },
-      { new: true, runValidators: true }
-    ).select("-password");
+      { new: true }
+    );
 
-    res.json(updatedUser);
-  } catch (error) {
-    console.error("Update profile error:", error);
-    res.status(500).json({ message: "Server error" });
+    res.json(user);
+  } catch {
+    res.status(500).json({ message: "Update failed" });
   }
 };
-
 // ---------------- CHANGE PASSWORD ----------------
 export const changePassword = async (req: any, res: Response) => {
   try {
@@ -77,27 +76,5 @@ export const changePassword = async (req: any, res: Response) => {
   } catch (error) {
     console.error("Change password error:", error);
     res.status(500).json({ message: "Server error" });
-  }
-};
-
-
-export const UploadAvatar = async (req: any, res: Response) => {
-  try {
-    const localPath = req.file?.path;
-
-    if (!localPath) {
-      return res.status(400).json({ message: "No image file uploaded" });
-    }
-
-    const result = await uploadToCloudinary(localPath, "admin-avatars");
-
-    if (!result || !result.url) {
-      return res.status(500).json({ message: "Cloudinary upload failed" });
-    }
-
-    res.json({ url: result.url });
-  } catch (error) {
-    console.error("Avatar upload error:", error);
-    res.status(500).json({ message: "Server error during upload" });
   }
 };

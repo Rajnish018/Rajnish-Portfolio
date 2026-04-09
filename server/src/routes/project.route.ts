@@ -5,18 +5,20 @@ import {
   getProjectById,
   updateProject,
   deleteProject,
-  UploadProject,
 } from "../controllers/project.controller";
-import { upload } from "../middleware/multer.middleware";
 import { protect } from "../middleware/auth.middleware";
+import { upload } from "../middleware/multer.middleware";
 
 const router = express.Router();
 
+
 router.get("/", getProjects);
-router.get("/:id",protect, getProjectById);
-router.post("/",protect, createProject);
-router.put("/:id", protect,updateProject);
-router.delete("/:id",protect, deleteProject);
-router.post("/upload",protect,upload.single("image"),UploadProject)
+
+router.use(protect)
+
+router.get("/:id",getProjectById);
+router.post("/",upload.single("image"), createProject);
+router.put("/:id",upload.single("image"), updateProject);
+router.delete("/:id", deleteProject);
 
 export default router;

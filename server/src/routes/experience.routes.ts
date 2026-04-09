@@ -5,10 +5,14 @@ import {
   updateExperience,
   deleteExperience,
 } from "../controllers/experience.controller";
+import { protect } from "../middleware/auth.middleware";
 
 const router = express.Router();
 
 router.get("/", getExperiences);
+
+router.use(protect);
+
 router.post("/", createExperience);
 router.put("/:id", updateExperience);
 router.delete("/:id", deleteExperience);

@@ -14,7 +14,6 @@ import {
     getProfileApi,
     updateProfileApi,
     changePasswordApi,
-    uploadAvatarApi,
 } from "../../services/apiService";
 
 type TabType = "profile" | "security" | "preferences";
@@ -49,6 +48,7 @@ export const AdminSettings: React.FC = () => {
     const [uploading, setUploading] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [message, setMessage] = useState("");
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
     // ---------------- FETCH PROFILE ----------------
     useEffect(() => {
@@ -66,51 +66,97 @@ export const AdminSettings: React.FC = () => {
 
 
     // ---------------- IMAGE UPLOAD ----------------
-    const uploadImage = async (file: File) => {
-        if (!file.type.startsWith("image/")) {
-           showToast("Only image files are allowed","error")
-            return;
-        }
+ const processFile = (file: File) => {
+  if (!file.type.startsWith("image/")) {
+    showToast("Only image files allowed", "error");
+    return;
+  }
 
-        if (file.size > 2 * 1024 * 1024) {
-            showToast("Avatar must be smaller than 2MB","error")
-            return;
-        }
+  if (file.size > 2 * 1024 * 1024) {
+    showToast("Avatar must be < 2MB", "error");
+    return;
+  }
 
-        setUploading(true);
-       
+  // cleanup old preview
+  if (profile.avatar?.startsWith("blob:")) {
+    URL.revokeObjectURL(profile.avatar);
+  }
 
-        try {
-            const res = await uploadAvatarApi(file);
-            setProfile((prev) => ({ ...prev, avatar: res.url }));
-            showToast("Avatar uploaded. Save changes to update your profile.","success")
-        } catch (error: any) {
-            showToast(error?.message,"error")
-        } finally {
-            setUploading(false);
-        }
-    };
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        const file = e.dataTransfer.files[0];
-        if (file) uploadImage(file);
-    };
+  setSelectedFile(file);
 
-    // ---------------- PROFILE UPDATE ----------------
-    const handleProfileUpdate = async () => {
-        setLoading(true);
-        setMessage("");
+  // preview
+  const previewUrl = URL.createObjectURL(file);
 
-        try {
-            await updateProfileApi(profile);
-           showToast("Profile updated ","success")
-            setIsEditing(false);
-        } catch {
-           showToast("Profile updated failed","error")
-        }
+  setProfile((prev) => ({
+    ...prev,
+    avatar: previewUrl,
+  }));
+};
+const handleDrop = (e: React.DragEvent) => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+};
 
-        setLoading(false);
-    };
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (file) processFile(file);
+};
+
+useEffect(() => {
+  const preview = profile.avatar;
+
+  return () => {
+    if (preview?.startsWith("blob:")) {
+      URL.revokeObjectURL(preview);
+    }
+  };
+}, [profile.avatar]);
+
+const handleProfileUpdate = async () => {
+  if (!profile.name.trim() || !profile.email.trim()) {
+    showToast("Name and email are required", "error");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    const formData = new FormData();
+
+    formData.append("name", profile.name.trim());
+    formData.append("email", profile.email.trim());
+
+    // ✅ IMAGE LOGIC
+    if (selectedFile) {
+      formData.append("avatar", selectedFile);
+    } else if (
+      profile.avatar &&
+      !profile.avatar.startsWith("blob:")
+    ) {
+      formData.append("existingAvatar", profile.avatar);
+    }
+
+    const updatedUser = await updateProfileApi(formData);
+
+    // ✅ Sync UI with backend response
+    setProfile(updatedUser);
+
+    showToast("Profile updated successfully", "success");
+
+    // ✅ Reset states
+    setIsEditing(false);
+    setSelectedFile(null);
+
+  } catch (err: any) {
+    showToast(
+      err?.response?.data?.message || "Update failed",
+      "error"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
 
     // ---------------- PASSWORD ----------------
     const handlePasswordUpdate = async () => {
@@ -294,11 +340,7 @@ export const AdminSettings: React.FC = () => {
                                                     type="file"
                                                     id="avatarUpload"
                                                     className="hidden"
-                                                    onChange={(e) => {
-                                                        if (e.target.files?.[0]) {
-                                                            uploadImage(e.target.files[0]);
-                                                        }
-                                                    }}
+                                                    onChange={handleFileChange}
                                                 />
 
                                                 <label

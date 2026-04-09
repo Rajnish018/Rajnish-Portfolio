@@ -1,7 +1,7 @@
 export const API_ENDPOINTS = {
   SERVER:{
-    LOCAL_SERVER_URL:"http://localhost:5000/api/",
-    RENDER_SERVER_URL:"https://rajnish-portfolio.onrender.com/api",
+    LOCAL_SERVER_URL:"http://localhost:5000/api",
+    // RENDER_SERVER_URL:"https://rajnish-portfolio.onrender.com/api",
 
   },
   AUTH: {
@@ -26,8 +26,8 @@ export const API_ENDPOINTS = {
   },
 
   UPLOAD: {
-    IMAGE: "/upload",
-  },
+  IMAGE: (type: "avatar" | "project") => `/upload?type=${type}`,
+},
 
   SKILLS: {
     GET: "/skills",

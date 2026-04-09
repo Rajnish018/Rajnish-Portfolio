@@ -22,7 +22,6 @@ import {
   deleteProjectApi, 
   getProjectsApi, 
   updateProjectApi,
-  uploadProjectImageApi
 } from '../../services/apiService';
 import ConfirmModal from '@/src/components/ConfirmModal';
 
@@ -46,125 +45,175 @@ export const AdminProjects: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
   
-  // New loading states for file handling
-  const [uploading, setUploading] = useState(false);
+
   const [loading, setLoading] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  const fetchProjects = async () => {
-    try {
-      const data = await getProjectsApi();
-      setProjects(data);
-    } catch (err) {
-      showToast("Fetch projects error", "error");
+ // ---------------- FETCH PROJECTS ----------------
+const fetchProjects = async () => {
+  try {
+    const data = await getProjectsApi();
+    setProjects(data);
+  } catch (err) {
+    showToast("Fetch projects error", "error");
+  }
+};
+
+useEffect(() => {
+  fetchProjects();
+}, []);
+
+// ---------------- CLEANUP PREVIEW URL ----------------
+useEffect(() => {
+  const previewUrl = isEditing?.image;
+
+  return () => {
+    if (previewUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
     }
   };
+}, [isEditing?.image]);
 
-  useEffect(() => {
-    fetchProjects();
-  }, []);
+// ---------------- FILE HANDLING ----------------
+const processFile = (file: File) => {
+  if (!file.type.startsWith("image/")) {
+    showToast("Only image files allowed", "error");
+    return;
+  }
 
-  // ---------------- IMAGE UPLOAD LOGIC ----------------
-  const handleUploadClick = () => fileInputRef.current?.click();
+  if (file.size > 2 * 1024 * 1024) {
+    showToast("Image must be < 2MB", "error");
+    return;
+  }
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !isEditing) return;
+  setSelectedFile(file);
 
-    // Validation
-    if (!file.type.startsWith("image/")) {
-        showToast("Only image files are allowed", "error");
-        return;
-    }
-    if (file.size > 2 * 1024 * 1024) {
-        showToast("Image must be smaller than 2MB", "error");
-        return;
-    }
-
-    setUploading(true);
-    try {
-        const res = await uploadProjectImageApi(file);
-        setIsEditing((prev) => prev ? { ...prev, image: res.url } : null);
-        showToast("Image uploaded successfully", "success");
-    } catch (error: any) {
-        showToast(error?.response?.data?.message || error?.message || "Upload failed", "error");
-    } finally {
-        setUploading(false);
-        if (fileInputRef.current) fileInputRef.current.value = ""; // Reset input
-    }
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files[0];
-    if (file) {
-        // We can manually trigger the same logic
-        const fakeEvent = { target: { files: [file] } } as any;
-        handleFileChange(fakeEvent);
-    }
-  };
-
-  // ---------------- PROJECT ACTIONS ----------------
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    try {
-      await deleteProjectApi(deleteId);
-      setProjects(prev => prev.filter(p => p._id !== deleteId));
-      showToast("Project deleted successfully", "success");
-    } catch (err) {
-      showToast("Failed to delete", "error");
-    } finally {   
-      setDeleteId(null);
-    }
-  };
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!isEditing || uploading) return;
-
-    const trimmedTitle = isEditing.title.trim();
-    const trimmedDescription = isEditing.description.trim();
-    const trimmedGithubLink = isEditing.githubLink?.trim() || "";
-    const trimmedPreviewLink = isEditing.previewLink?.trim() || "";
-    const payload = {
-      title: trimmedTitle,
-      description: trimmedDescription,
-      category: isEditing.category || "Web",
-      image: isEditing.image || "",
-      tags: Array.isArray(isEditing.tags) ? isEditing.tags.filter(Boolean) : [],
-      status: isEditing.status || "DRAFT",
-      githubLink: trimmedGithubLink,
-      previewLink: trimmedPreviewLink,
-    };
-
-    if (!payload.title || !payload.description) {
-      showToast("Title and description are required", "error");
-      return;
-    }
-
-    setLoading(true);
-    try {
-      let saved: any;
-      if (isEditing._id) {
-        saved = await updateProjectApi(isEditing._id, payload);
-        setProjects(prev => prev.map(p => p._id === saved._id ? saved : p));
-        showToast("Project updated successfully", "success");
-      } else {
-        saved = await createProjectApi(payload);
-        setProjects(prev => [...prev, saved]);
-        showToast("Project created successfully", "success");
-      }
-      setIsEditing(null);
-    } catch (err) {
-      showToast("Failed to save project", "error");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filteredProjects = projects.filter(p =>
-    p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.category.toLowerCase().includes(searchTerm.toLowerCase())
+  setIsEditing(prev =>
+    prev ? { ...prev, image: URL.createObjectURL(file) } : null
   );
+};
+
+const handleUploadClick = () => fileInputRef.current?.click();
+
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (file) processFile(file);
+};
+
+const handleDrop = (e: React.DragEvent) => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+};
+
+// ---------------- DELETE ----------------
+const handleDelete = async () => {
+  if (!deleteId) return;
+
+  try {
+    await deleteProjectApi(deleteId);
+    setProjects(prev => prev.filter(p => p._id !== deleteId));
+    showToast("Project deleted successfully", "success");
+  } catch {
+    showToast("Failed to delete", "error");
+  } finally {
+    setDeleteId(null);
+  }
+};
+
+// ---------------- SAVE (CREATE + UPDATE) ----------------
+const handleSave = async (e: React.FormEvent) => {
+  e.preventDefault();
+
+  if (!isEditing || loading) return;
+
+  // -------- VALIDATION --------
+  const trimmedTitle = isEditing.title.trim();
+  const trimmedDescription = isEditing.description.trim();
+
+  if (!trimmedTitle || !trimmedDescription) {
+    showToast("Title and description are required", "error");
+    return;
+  }
+
+  // -------- FORM DATA --------
+  const formData = new FormData();
+
+  formData.append("title", trimmedTitle);
+  formData.append("description", trimmedDescription);
+  formData.append("category", isEditing.category || "Web");
+  formData.append("status", isEditing.status || "DRAFT");
+
+  if (isEditing.githubLink?.trim()) {
+    formData.append("githubLink", isEditing.githubLink.trim());
+  }
+
+  if (isEditing.previewLink?.trim()) {
+    formData.append("previewLink", isEditing.previewLink.trim());
+  }
+
+  formData.append(
+    "tags",
+    JSON.stringify(
+      Array.isArray(isEditing.tags)
+        ? isEditing.tags.filter(Boolean)
+        : []
+    )
+  );
+
+  // -------- IMAGE HANDLING --------
+  if (selectedFile) {
+    formData.append("image", selectedFile);
+  } else if (isEditing.image && !isEditing.image.startsWith("blob:")) {
+    formData.append("existingImage", isEditing.image);
+  }
+
+  // -------- API CALL --------
+  setLoading(true);
+
+  try {
+    if (isEditing._id) {
+      // UPDATE
+      const updated = await updateProjectApi(isEditing._id, formData);
+
+      setProjects(prev =>
+        prev.map(p => (p._id === updated._id ? updated : p))
+      );
+
+      showToast("Project updated successfully", "success");
+    } else {
+      // CREATE
+      const created = await createProjectApi(formData);
+
+      setProjects(prev => [...prev, created]);
+
+      showToast("Project created successfully", "success");
+    }
+
+    // -------- RESET --------
+    setIsEditing(null);
+    setSelectedFile(null);
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+  } catch (err: any) {
+    showToast(
+      err?.response?.data?.message || "Failed to save project",
+      "error"
+    );
+  } finally {
+    setLoading(false);
+  }
+};
+
+// ---------------- FILTER ----------------
+const filteredProjects = projects.filter(p =>
+  p.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+  p.category.toLowerCase().includes(searchTerm.toLowerCase())
+);
+
 
   return (
     <div className="space-y-12">
@@ -340,12 +389,7 @@ export const AdminProjects: React.FC = () => {
                     onDragOver={(e) => e.preventDefault()}
                     className="aspect-video rounded-2xl overflow-hidden relative group bg-white/5 border border-dashed border-white/10 hover:border-accent transition-colors"
                   >
-                    {uploading ? (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-bg/60 backdrop-blur-sm z-10">
-                        <Loader2 className="animate-spin text-accent mb-2" size={32} />
-                        <p className="text-[10px] uppercase tracking-widest text-accent font-bold">Uploading to Server...</p>
-                      </div>
-                    ) : null}
+
 
                     {isEditing.image ? (
                       <img src={isEditing.image} alt="Preview" className="w-full h-full object-cover" />
@@ -470,7 +514,7 @@ export const AdminProjects: React.FC = () => {
                   </button>
                   <button 
                     type="submit"
-                    disabled={loading || uploading}
+                    disabled={loading }
                     className="flex-1 py-4 bg-accent text-white rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-accent/80 transition-all shadow-[0_10px_30px_rgba(124,58,237,0.3)] disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {loading ? <Loader2 className="animate-spin mx-auto" size={18} /> : (isEditing._id ? 'Update Project' : 'Create Project')}

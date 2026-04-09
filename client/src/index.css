@@ -65,3 +65,14 @@
   @apply bg-white/10 rounded-full hover:bg-white/20 transition-colors;
 }
 
+
+@layer base {
+  html, body {
+    cursor: none;
+  }
+
+  /* Ensure interactive elements also hide the cursor */
+  a, button, input {
+    cursor: none;
+  }
+}

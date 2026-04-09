@@ -32,7 +32,7 @@ export const LoadingScreen: React.FC = () => {
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.8, ease: "easeInOut" }}
-      className="fixed inset-0 z-[10000] bg-bg flex items-center justify-center"
+      className="fixed inset-0 z-10000 bg-bg flex items-center justify-center"
     >
       <div className="relative flex items-center justify-center">
         

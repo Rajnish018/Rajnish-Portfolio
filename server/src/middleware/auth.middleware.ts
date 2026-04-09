@@ -17,7 +17,7 @@ export const protect = async (req: any, res: Response, next: NextFunction) => {
       req.user = await User.findById(decoded.id).select("-password");
       next();
     } catch (error) {
-      return res.status(401).json({ message: "Not authorized" });
+      return res.status(401).json({ message: "You are not authorized" });
     }
   }
 

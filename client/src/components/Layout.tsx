@@ -65,7 +65,7 @@ export const Navbar: React.FC = () => {
       {/* Logo - Higher Z-Index */}
       <Link 
         to="/" 
-        className="text-xl md:text-2xl font-display font-bold accent-gradient z-[70] relative"
+        className="text-xl md:text-2xl font-display font-bold accent-gradient z-70 relative"
       >
         R & R Labs
       </Link>
@@ -86,7 +86,7 @@ export const Navbar: React.FC = () => {
       </div>
 
       {/* Right Side Actions - Higher Z-Index */}
-      <div className="flex items-center gap-3 md:gap-5 z-[70] relative">
+      <div className="flex items-center gap-3 md:gap-5 z-70 relative">
         <Link 
           to={user ? "/admin/dashboard" : "/admin/login"} 
           className="flex items-center gap-2 p-1 pl-3 rounded-full border border-white/10 hover:border-accent/50 bg-white/5 transition-all group"
@@ -121,7 +121,7 @@ export const Navbar: React.FC = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '100%' }}
             transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-            className="fixed inset-0 h-[100dvh] w-full bg-black/95 backdrop-blur-2xl z-[60] flex flex-col p-8 md:hidden"
+            className="fixed inset-0 h-dvh w-full bg-black/95 backdrop-blur-2xl z-60 flex flex-col p-8 md:hidden"
           >
             {/* Ambient Background Glow */}
             <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-accent/10 blur-[100px] rounded-full" />
