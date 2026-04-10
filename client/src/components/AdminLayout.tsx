@@ -9,7 +9,8 @@ import {
   LogOut,
   Plus,
   Expand,
-  Mail
+  Mail,
+  Link2
 } from 'lucide-react';
 
 import { useAuth } from '../contexts/AuthContext';
@@ -52,6 +53,7 @@ export const AdminLayout: React.FC = () => {
     { name: 'Skills', icon: <BarChart3 size={20} />, path: '/admin/skills' },
     { name: 'Experience', icon: <Expand size={20} />, path: '/admin/experience' },
     { name: 'Messages', icon: <Mail size={20} />, path: '/admin/messages' },
+    { name: 'Links', icon: <Link2 size={20} />, path: '/admin/links' },
     { name: 'Settings', icon: <Settings size={20} />, path: '/admin/settings' },
   ];
 

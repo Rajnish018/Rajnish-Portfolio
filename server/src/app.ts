@@ -10,6 +10,7 @@ import analyticsRoutes from "./routes/analytics.routes";
 import UploadRoute from './routes/upload.route'
 import adminRoutes from "./routes/admin.routes";
 import experienceRoutes from "./routes/experience.routes";
+import linksRoutes from './routes/link.route'
 import { ENV } from "./config/env";
 
 
@@ -22,7 +23,7 @@ const {VERCEL_FORNTEND_URL,LOCAL_FORNTEND_URL}=ENV;
 
 console.log(LOCAL_FORNTEND_URL)
 app.use(cors({
-    origin: VERCEL_FORNTEND_URL|| LOCAL_FORNTEND_URL,
+    origin:  VERCEL_FORNTEND_URL,
     credentials: true,
 }));
 app.use(express.json());
@@ -39,6 +40,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/stats", statsRoutes);
 app.use("/api/experience", experienceRoutes);
 app.use("/api/admin",adminRoutes)
+app.use("/api/identity",linksRoutes)
 
 
 export default app;

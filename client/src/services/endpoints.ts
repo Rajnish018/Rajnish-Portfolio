@@ -68,4 +68,9 @@ export const API_ENDPOINTS = {
   ANALYTICS: {
     GET: "/analytics",
   },
+  IDENTITY: {
+  GET: "/identity",
+  UPDATE: "/identity",
+  DELETE_LINK: (id: string) => `/identity/link/${id}`,
+},
 };

@@ -27,6 +27,7 @@ import { AdminExperience } from "./pages/admin/AdminExperience";
 import PrivateRoute from "./routes/PrivateRoute";
 import { AdminMessages } from "./pages/admin/AdminMessages";
 import BackgroundPattern from "./components/BackgroundPattern";
+import { AdminLinks } from "./pages/admin/AdminLinks";
 
 // -----------------------------
 // Page Transition Wrapper
@@ -107,6 +108,9 @@ const AppContent: React.FC = () => {
                 <Route path="analytics" element={<AdminAnalytics />} />
                 <Route path="experience" element={<AdminExperience />} />
                 <Route path="settings" element={<AdminSettings />} />
+                <Route path="links" element={<AdminLinks/>} />
+
+
               </Route>
 
               {/* ---------------- 404 ---------------- */}

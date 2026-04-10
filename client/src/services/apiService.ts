@@ -289,3 +289,43 @@ export const getAnalyticsApi = async () => {
   const res = await apiClient.get(API_ENDPOINTS.ANALYTICS.GET);
   return res.data;
 };
+
+
+// -----------------------------
+// IDENTITY
+// -----------------------------
+
+export const getSettingsApi = async () => {
+  try {
+    const { data } = await apiClient.get(API_ENDPOINTS.IDENTITY.GET);
+    return data.data; // because backend sends { message, data }
+  } catch (error: any) {
+    throw error?.response?.data || {
+      message: "Failed to fetch identity settings",
+    };
+  }
+};
+
+export const updateSettingsApi = async (formData: FormData) => {
+  try {
+    const { data } = await apiClient.put(API_ENDPOINTS.IDENTITY.UPDATE,formData);
+    return data.data;
+  } catch (error: any) {
+    throw error?.response?.data || {
+      message: "Failed to update identity settings",
+    };
+  }
+};
+
+export const deleteLinkApi = async (linkId: string) => {
+  try {
+    const { data } = await apiClient.delete(
+      API_ENDPOINTS.IDENTITY.DELETE_LINK(linkId)
+    );
+    return data;
+  } catch (error: any) {
+    throw error?.response?.data || {
+      message: "Failed to delete link",
+    };
+  }
+};

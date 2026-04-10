@@ -1,7 +1,7 @@
 import React, { useState,useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, Menu, X  ,Twitter, Linkedin, Instagram} from 'lucide-react';
+import { User, Menu, X  ,Twitter, Linkedin, Instagram,Github} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 
 export const Navbar: React.FC = () => {
@@ -168,6 +168,8 @@ export const Navbar: React.FC = () => {
   );
 };
 
+
+
 export const Footer: React.FC = () => {
   const location = useLocation();
   const isAdmin = location.pathname.startsWith("/admin");
@@ -189,7 +191,8 @@ export const Footer: React.FC = () => {
           {[
             { icon: <Twitter size={18} />, link: "#" },
             { icon: <Linkedin size={18} />, link: "#" },
-            { icon: <Instagram size={18} />, link: "#" }
+            { icon: <Instagram size={18} />, link: "#" },
+            { icon: <Github size={18} />, link: "#" } // Added GitHub here
           ].map((social, i) => (
             <a
               key={i}

@@ -1,21 +1,45 @@
 import React, { useEffect, useRef } from 'react';
 import { motion } from 'motion/react';
 
+
 export const CustomCursor: React.FC = () => {
   const cursorRef = useRef<HTMLDivElement>(null);
   const followerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const moveCursor = (e: MouseEvent) => {
-      if (cursorRef.current && followerRef.current) {
-        const { clientX: x, clientY: y } = e;
-        cursorRef.current.style.transform = `translate3d(${x - 16}px, ${y - 16}px, 0)`;
-        followerRef.current.style.transform = `translate3d(${x - 24}px, ${y - 24}px, 0)`;
+      if (!cursorRef.current || !followerRef.current) return;
+
+      const { clientX: x, clientY: y } = e;
+
+      cursorRef.current.style.transform = `translate3d(${x - 16}px, ${y - 16}px, 0)`;
+      followerRef.current.style.transform = `translate3d(${x - 24}px, ${y - 24}px, 0)`;
+    };
+
+    const handleMouseOver = (e: Event) => {
+      const target = e.target as HTMLElement;
+
+      const isInteractive =""
+        target.closest("select")
+
+      if (!cursorRef.current || !followerRef.current) return;
+
+      if (isInteractive) {
+        cursorRef.current.classList.add("cursor-hidden");
+        followerRef.current.classList.add("cursor-hidden");
+      } else {
+        cursorRef.current.classList.remove("cursor-hidden");
+        followerRef.current.classList.remove("cursor-hidden");
       }
     };
 
-    window.addEventListener('mousemove', moveCursor);
-    return () => window.removeEventListener('mousemove', moveCursor);
+    window.addEventListener("mousemove", moveCursor);
+    window.addEventListener("mouseover", handleMouseOver);
+
+    return () => {
+      window.removeEventListener("mousemove", moveCursor);
+      window.removeEventListener("mouseover", handleMouseOver);
+    };
   }, []);
 
   return (

@@ -76,3 +76,33 @@
     cursor: none;
   }
 }
+
+.custom-cursor,
+.custom-cursor-follower {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  transition: transform 0.08s linear, opacity 0.2s ease, scale 0.2s ease;
+}
+
+.custom-cursor {
+  width: 32px;
+  height: 32px;
+  border: 2px solid #7c3aed; /* accent */
+  border-radius: 50%;
+}
+
+.custom-cursor-follower {
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+}
+
+/* 🔥 Smooth hide */
+.cursor-hidden {
+  opacity: 0;
+  transform: scale(0.5);
+}
