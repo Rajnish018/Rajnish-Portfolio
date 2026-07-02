@@ -13,22 +13,49 @@ import experienceRoutes from "./routes/experience.routes";
 import linksRoutes from './routes/link.route'
 import { ENV } from "./config/env";
 
-
-
-
 const app = express();
 
-const {VERCEL_FORNTEND_URL,LOCAL_FORNTEND_URL}=ENV;
+const allowedOrigins = [
+  ...ENV.ALLOWED_ORIGINS,
+  ENV.VERCEL_FRONTEND_URL,
+  ENV.VERCEL_FORNTEND_URL,
+  ENV.LOCAL_FRONTEND_URL,
+  ENV.LOCAL_FORNTEND_URL,
+].filter(Boolean) as string[];
 
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
 
-console.log(LOCAL_FORNTEND_URL)
-app.use(cors({
-    origin:  VERCEL_FORNTEND_URL,
-    credentials: true,
-}));
+    const allowedLocalhost = [
+      "http://localhost:",
+      "http://127.0.0.1:",
+      "https://localhost:",
+      "https://127.0.0.1:",
+    ].some((prefix) => origin.startsWith(prefix));
+
+    if (allowedOrigins.includes(origin) || allowedLocalhost) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error(`Origin ${origin} not allowed by CORS`));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+};
+
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(express.json());
 
-
+app.get("/", (req, res) => {
+    res.send("Welcome to the API");
+});
 
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);

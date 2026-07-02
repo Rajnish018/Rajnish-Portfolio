@@ -32,8 +32,28 @@ export const registerApi = async (data: any) => {
   return res.data;
 };
 
+export const forgotPasswordApi = async (email: string) => {
+  const res = await apiClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
+  return res.data;
+};
+
+export const resetPasswordApi = async (token: string, password: string) => {
+  const res = await apiClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, { token, password });
+  return res.data;
+};
+
 export const getMeApi = async () => {
   const res = await apiClient.get(API_ENDPOINTS.AUTH.CURRENT_USER);
+  return res.data;
+};
+
+export const forgotPasswordApi = async (email: string) => {
+  const res = await apiClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
+  return res.data;
+};
+
+export const resetPasswordApi = async (token: string, password: string) => {
+  const res = await apiClient.post(API_ENDPOINTS.AUTH.RESET_PASSWORD, { token, password });
   return res.data;
 };
 

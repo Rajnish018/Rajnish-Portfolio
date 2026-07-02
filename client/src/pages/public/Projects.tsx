@@ -13,7 +13,7 @@ export const Projects: React.FC = () => {
     const fetchProjects = async () => {
       try {
         const response = await getProjectsApi();
-        // console.log("response",response)
+        console.log("response",response)
         setProjects(response);
       } catch (error) {
         console.error("Error fetching projects:", error);
@@ -162,7 +162,7 @@ export const Projects: React.FC = () => {
 
                     {/* Tags */}
                     <div className="flex flex-wrap gap-2 mb-8">
-                      {project.tags.map(tag => (
+                      {(project.tags || []).map((tag: string) => (
                         <span key={tag} className="px-2 py-1 rounded bg-white/5 border border-white/5 text-[9px] uppercase tracking-tighter text-white/40">
                           {tag}
                         </span>

@@ -5,6 +5,7 @@ import { Lock, Mail, ArrowRight, Home, Eye, EyeOff } from 'lucide-react';
 
 import { useAuth } from '../../contexts/AuthContext';
 import { useToast } from '../../contexts/ToastContext';
+import { forgotPasswordApi } from '../../services/apiService';
 import { LoadingScreen } from '@/src/components/UI';
 
 export const AdminLogin: React.FC = () => {
@@ -15,6 +16,7 @@ export const AdminLogin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showForgot, setShowForgot] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
   
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -45,6 +47,26 @@ export const AdminLogin: React.FC = () => {
     } catch (err: any) {
       setLoading(false);
       showToast(err.message || "Login failed. Please check your credentials.", "error");
+    }
+  };
+
+  const handleSendResetLink = async () => {
+    if (!resetEmail.trim()) {
+      showToast("Please enter your admin email.", "error");
+      return;
+    }
+
+    setResetLoading(true);
+
+    try {
+      const response = await forgotPasswordApi(resetEmail.trim());
+      showToast(response.message || "If the account exists, a reset link has been sent.", "success");
+      setResetEmail("");
+      setShowForgot(false);
+    } catch (error: any) {
+      showToast(error.message || "Failed to send reset link.", "error");
+    } finally {
+      setResetLoading(false);
     }
   };
 
@@ -185,14 +207,11 @@ export const AdminLogin: React.FC = () => {
 
               <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => {
-                    console.log("Send reset to:", resetEmail);
-                    showToast("Reset link sent if account exists.", "info");
-                    setShowForgot(false);
-                  }}
-                  className="w-full py-3 rounded-xl bg-accent text-white text-sm font-bold uppercase tracking-widest hover:bg-accent/80 transition-all shadow-lg shadow-accent/20"
+                  onClick={handleSendResetLink}
+                  disabled={resetLoading}
+                  className="w-full py-3 rounded-xl bg-accent text-white text-sm font-bold uppercase tracking-widest hover:bg-accent/80 transition-all shadow-lg shadow-accent/20 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Send Reset Link
+                  {resetLoading ? "Sending..." : "Send Reset Link"}
                 </button>
                 <button
                   onClick={() => setShowForgot(false)}
