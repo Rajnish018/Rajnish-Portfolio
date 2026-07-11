@@ -229,7 +229,7 @@ export const AdminDashboard: React.FC = () => {
             <div key={project._id} className="glass-card overflow-hidden group">
               <div className="aspect-video overflow-hidden">
                 <img
-                  src={project.image}
+                  src={Array.isArray(project.image) ? project.image[0] : project.image}
                   className="w-full h-full object-cover group-hover:scale-105 transition"
                   alt={project.title}
                 />

@@ -47,7 +47,8 @@ export const AdminProjects: React.FC = () => {
   
 
   const [loading, setLoading] = useState(false);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedPreviewUrls, setSelectedPreviewUrls] = useState<string[]>([]);
 
  // ---------------- FETCH PROJECTS ----------------
 const fetchProjects = async () => {
@@ -65,14 +66,18 @@ useEffect(() => {
 
 // ---------------- CLEANUP PREVIEW URL ----------------
 useEffect(() => {
-  const previewUrl = isEditing?.image;
+  if (selectedFiles.length === 0) {
+    setSelectedPreviewUrls([]);
+    return;
+  }
+
+  const urls = selectedFiles.map((file) => URL.createObjectURL(file));
+  setSelectedPreviewUrls(urls);
 
   return () => {
-    if (previewUrl?.startsWith("blob:")) {
-      URL.revokeObjectURL(previewUrl);
-    }
+    urls.forEach((url) => URL.revokeObjectURL(url));
   };
-}, [isEditing?.image]);
+}, [selectedFiles]);
 
 // ---------------- FILE HANDLING ----------------
 const processFile = (file: File) => {
@@ -86,24 +91,31 @@ const processFile = (file: File) => {
     return;
   }
 
-  setSelectedFile(file);
+  setSelectedFiles((prev) => [...prev, file]);
+};
 
-  setIsEditing(prev =>
-    prev ? { ...prev, image: URL.createObjectURL(file) } : null
-  );
+const handleRemoveSelectedImage = (index: number) => {
+  setSelectedFiles((prev) => prev.filter((_, idx) => idx !== index));
 };
 
 const handleUploadClick = () => fileInputRef.current?.click();
 
 const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (file) processFile(file);
+  const files = Array.from(e.target.files || []);
+  files.forEach(processFile);
+};
+
+const handleClearSelectedImages = () => {
+  setSelectedFiles([]);
+  if (fileInputRef.current) {
+    fileInputRef.current.value = "";
+  }
 };
 
 const handleDrop = (e: React.DragEvent) => {
   e.preventDefault();
-  const file = e.dataTransfer.files[0];
-  if (file) processFile(file);
+  const files = Array.from(e.dataTransfer.files || []);
+  files.forEach(processFile);
 };
 
 // ---------------- DELETE ----------------
@@ -162,10 +174,12 @@ const handleSave = async (e: React.FormEvent) => {
   );
 
   // -------- IMAGE HANDLING --------
-  if (selectedFile) {
-    formData.append("image", selectedFile);
-  } else if (isEditing.image && !isEditing.image.startsWith("blob:")) {
-    formData.append("existingImage", isEditing.image);
+  if (selectedFiles.length > 0) {
+    selectedFiles.forEach((file) => {
+      formData.append("images", file);
+    });
+  } else if (isEditing.image) {
+    formData.append("existingImage", JSON.stringify(isEditing.image));
   }
 
   // -------- API CALL --------
@@ -192,7 +206,7 @@ const handleSave = async (e: React.FormEvent) => {
 
     // -------- RESET --------
     setIsEditing(null);
-    setSelectedFile(null);
+    setSelectedFiles([]);
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
@@ -222,6 +236,7 @@ const filteredProjects = projects.filter(p =>
         ref={fileInputRef}
         onChange={handleFileChange}
         accept="image/*"
+        multiple
         className="hidden"
       />
 
@@ -231,7 +246,10 @@ const filteredProjects = projects.filter(p =>
           <p className="text-white/40 text-sm">Manage architectural case studies and studio archives.</p>
         </div>
         <button 
-          onClick={() => setIsEditing({ ...EMPTY_PROJECT })}
+          onClick={() => {
+            setIsEditing({ ...EMPTY_PROJECT });
+            handleClearSelectedImages();
+          }}
           className="flex items-center px-8 py-3 bg-accent text-white rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-accent/80 transition-all hover:scale-105 shadow-[0_10px_30px_rgba(124,58,237,0.3)]"
         >
           <Plus size={18} className="mr-2" /> New Project
@@ -304,7 +322,7 @@ const filteredProjects = projects.filter(p =>
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-lg overflow-hidden shrink-0 bg-white/5 border border-white/10">
                         {project.image ? (
-                          <img src={project.image} alt={project.title} className="w-full h-full object-cover" />
+                          <img src={Array.isArray(project.image) ? project.image[0] : project.image} alt={project.title} className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-white/20">
                             <ImageIcon size={20} />
@@ -390,23 +408,54 @@ const filteredProjects = projects.filter(p =>
                     className="aspect-video rounded-2xl overflow-hidden relative group bg-white/5 border border-dashed border-white/10 hover:border-accent transition-colors"
                   >
 
-
-                    {isEditing.image ? (
-                      <img src={isEditing.image} alt="Preview" className="w-full h-full object-cover" />
+                    {selectedPreviewUrls.length > 0 ? (
+                      <div className="grid grid-cols-2 gap-2 p-2 h-full">
+                        {selectedPreviewUrls.map((imgUrl, idx) => (
+                          <div key={`${imgUrl}-${idx}`} className="relative rounded-lg overflow-hidden border border-white/10">
+                            <img
+                              src={imgUrl}
+                              alt={`Selected preview ${idx + 1}`}
+                              className="w-full h-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSelectedImage(idx)}
+                              className="absolute top-2 right-2 p-1 rounded-full bg-black/60 text-white hover:bg-black"
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : isEditing.image ? (
+                      Array.isArray(isEditing.image) ? (
+                        <div className="grid grid-cols-2 gap-2 p-2 h-full">
+                          {isEditing.image.map((imgUrl, idx) => (
+                            <img
+                              key={`${imgUrl}-${idx}`}
+                              src={imgUrl}
+                              alt={`Preview ${idx + 1}`}
+                              className="w-full h-full object-cover rounded-lg"
+                            />
+                          ))}
+                        </div>
+                      ) : (
+                        <img src={isEditing.image} alt="Preview" className="w-full h-full object-cover" />
+                      )
                     ) : (
                       <div className="w-full h-full flex flex-col items-center justify-center text-white/20">
                         <ImageIcon size={40} className="mb-2" />
                         <span className="text-[10px] uppercase tracking-widest">No Image Selected</span>
                       </div>
                     )}
-                    
+
                     <div className="absolute inset-0 bg-bg/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <button 
                         type="button" 
                         onClick={handleUploadClick}
                         className="flex items-center gap-2 px-6 py-3 bg-white text-bg rounded-xl text-[10px] font-bold uppercase tracking-widest hover:scale-105 transition-transform shadow-xl"
                       >
-                        <Upload size={14} /> {isEditing.image ? 'Replace Image' : 'Upload Image'}
+                        <Upload size={14} /> {isEditing.image ? 'Replace Images' : 'Upload Images'}
                       </button>
                       <p className="mt-2 text-[8px] text-white/40 uppercase tracking-widest">Drag & Drop or Click (Max 2MB)</p>
                     </div>
@@ -469,13 +518,13 @@ const filteredProjects = projects.filter(p =>
                       setIsEditing({
                         ...isEditing,
                         tags: e.target.value
-                          .split(',')
+                          .split(/[\s,]+/)
                           .map((tag) => tag.trim())
                           .filter(Boolean),
                       })
                     }
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-4 focus:border-accent focus:outline-none transition-colors placeholder:text-white/20"
-                    placeholder="React, TypeScript, Node.js"
+                    placeholder="React TypeScript Node.js or React, TypeScript, Node.js"
                   />
                 </div>
 
@@ -507,7 +556,10 @@ const filteredProjects = projects.filter(p =>
                   <button 
                     type="button"
                     disabled={loading}
-                    onClick={() => setIsEditing(null)}
+                    onClick={() => {
+                      setIsEditing(null);
+                      handleClearSelectedImages();
+                    }}
                     className="flex-1 py-4 bg-white/5 text-white/60 rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-white/10 transition-all disabled:opacity-50"
                   >
                     Discard

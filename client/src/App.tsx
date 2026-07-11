@@ -9,9 +9,9 @@ import { AdminLayout } from "./components/AdminLayout";
 
 
 // Pages
-import { Home } from "./pages/public/Home";
+import { Home } from "./pages/public/home/Home";
 import { About } from "./pages/public/About";
-import { Projects } from "./pages/public/Projects";
+import { Projects } from "./pages/public/project/Projects";
 import { Contact } from "./pages/public/Contact";
 import { NotFound } from "./pages/public/NotFound";
 
