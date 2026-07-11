@@ -9,7 +9,19 @@ const normalizeProjectPayload = (body: Record<string, any>) => {
     typeof body.description === "string" ? body.description.trim() : "";
   const category =
     typeof body.category === "string" ? body.category.trim() : "";
-  const image = typeof body.image === "string" ? body.image.trim() : "";
+  // image can be a string URL, a JSON stringified array, or an array
+  let image: string | string[] = [];
+  if (typeof body.image === "string") {
+    try {
+      const parsed = JSON.parse(body.image);
+      if (Array.isArray(parsed)) image = parsed;
+      else image = body.image.trim();
+    } catch {
+      image = body.image.trim();
+    }
+  } else if (Array.isArray(body.image)) {
+    image = body.image.map((i) => (typeof i === "string" ? i.trim() : i));
+  }
   const status =
     typeof body.status === "string" ? body.status.trim() : "DRAFT";
   const githubLink =
@@ -55,15 +67,34 @@ export const createProject = async (req: Request, res: Response) => {
       });
     }
 
-    // 🔥 IMAGE UPLOAD
-    if (req.file) {
-      const uploadRes = await uploadToCloudinary(
-        req.file.path,
-        "projects"
-      );
+    // 🔥 IMAGE UPLOAD (support multiple files via req.files or fields)
+    const filesObj: any = (req as any).files || {};
+    let files: Express.Multer.File[] = [];
+    if (Array.isArray(filesObj)) {
+      // multer may populate req.files as array in some setups
+      files = filesObj as any;
+    } else {
+      // fields-style: { images: [...], image: [...] }
+      files = [].concat(filesObj.images || filesObj.image || []);
+    }
 
-      if (uploadRes) {
-        payload.image = uploadRes.url;
+    if (files.length > 0) {
+      const urls: string[] = [];
+      for (const f of files) {
+        try {
+          const uploadRes = await uploadToCloudinary(f.path, "projects");
+          if (uploadRes && uploadRes.url) urls.push(uploadRes.url);
+        } catch (e) {
+          console.error("Upload failed for file:", f.path, e);
+        }
+      }
+
+      // merge with any existing image(s) value in payload
+      if (payload.image && payload.image.length) {
+        const existing = Array.isArray(payload.image) ? payload.image : [payload.image as string];
+        payload.image = [...existing, ...urls];
+      } else {
+        payload.image = urls;
       }
     }
 
@@ -114,18 +145,47 @@ export const updateProject = async (req: Request, res: Response) => {
       });
     }
 
-    // 🔥 IMAGE LOGIC
-    if (req.file) {
-      const uploadRes = await uploadToCloudinary(
-        req.file.path,
-        "projects"
-      );
+    // 🔥 IMAGE LOGIC (support multiple files)
+    const filesObj: any = (req as any).files || {};
+    let files: Express.Multer.File[] = [];
+    if (Array.isArray(filesObj)) {
+      files = filesObj as any;
+    } else {
+      files = [].concat(filesObj.images || filesObj.image || []);
+    }
 
-      if (uploadRes) {
-        payload.image = uploadRes.url;
+    if (files.length > 0) {
+      const urls: string[] = [];
+      for (const f of files) {
+        try {
+          const uploadRes = await uploadToCloudinary(f.path, "projects");
+          if (uploadRes && uploadRes.url) urls.push(uploadRes.url);
+        } catch (e) {
+          console.error("Upload failed for file:", f.path, e);
+        }
       }
+
+      // If existing images provided in body, merge them
+      let existing: string[] = [];
+      if (req.body.existingImage) {
+        try {
+          const parsed = typeof req.body.existingImage === 'string' ? JSON.parse(req.body.existingImage) : req.body.existingImage;
+          if (Array.isArray(parsed)) existing = parsed;
+          else if (typeof parsed === 'string') existing = [parsed];
+        } catch {
+          if (typeof req.body.existingImage === 'string') existing = [req.body.existingImage];
+        }
+      }
+
+      payload.image = [...existing, ...urls];
     } else if (req.body.existingImage) {
-      payload.image = req.body.existingImage;
+      // if no new files, use the existingImage value as-is
+      try {
+        const parsed = typeof req.body.existingImage === 'string' ? JSON.parse(req.body.existingImage) : req.body.existingImage;
+        payload.image = parsed;
+      } catch {
+        payload.image = req.body.existingImage;
+      }
     }
 
     const project = await Project.findByIdAndUpdate(

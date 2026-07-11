@@ -53,9 +53,18 @@ app.use(cors(corsOptions));
 app.options("*", cors(corsOptions));
 app.use(express.json());
 
+// Request Logger
+app.use((req, res, next) => {
+  console.log(
+    `[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`
+  );
+  next();
+})
+
 app.get("/", (req, res) => {
     res.send("Welcome to the API");
 });
+
 
 app.use("/api/auth", authRoutes);
 app.use("/api/projects", projectRoutes);

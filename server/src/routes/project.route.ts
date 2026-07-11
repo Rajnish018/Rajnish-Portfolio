@@ -17,8 +17,9 @@ router.get("/", getProjects);
 router.use(protect)
 
 router.get("/:id",getProjectById);
-router.post("/",upload.single("image"), createProject);
-router.put("/:id",upload.single("image"), updateProject);
+// accept either a single `image` field or multiple `images` field (for backwards compatibility)
+router.post("/", upload.fields([{ name: 'images', maxCount: 6 }, { name: 'image', maxCount: 1 }]), createProject);
+router.put("/:id", upload.fields([{ name: 'images', maxCount: 6 }, { name: 'image', maxCount: 1 }]), updateProject);
 router.delete("/:id", deleteProject);
 
 export default router;

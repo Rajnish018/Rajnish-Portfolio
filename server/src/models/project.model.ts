@@ -4,7 +4,7 @@ export interface IProject extends Document {
   title: string;
   description: string;
   category: string;
-  image: string;
+  image: string | string[];
   tags: string[];
   status: string;
   githubLink:string;
@@ -16,7 +16,8 @@ const projectSchema = new mongoose.Schema<IProject>(
     title: { type: String, required: true },
     description: { type: String, required: true },
     category: { type: String },
-    image: { type: String },
+    // allow either a single image URL or an array of image URLs
+    image: { type: [String], default: [] },
     tags: [{ type: String }],
     status: { type: String },
     githubLink:{type:String},
