@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 import { Toast, ToastType } from "../components/Toast";
-import { AnimatePresence } from "motion/react";
+import { AnimatePresence } from "framer-motion";
 
 interface ToastItem {
   id: number;
@@ -42,7 +42,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       {children}
 
       {/* Toast Container */}
-      <div className="fixed bottom-6 right-6 space-y-4 z-50 w-[320px]">
+      <div className="fixed bottom-6 right-6 space-y-4 z-[9999] w-[320px]">
         <AnimatePresence>
           {toasts.map(t => (
             <Toast

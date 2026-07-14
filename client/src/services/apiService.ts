@@ -33,8 +33,12 @@ export const registerApi = async (data: any) => {
 };
 
 export const forgotPasswordApi = async (email: string) => {
-  const res = await apiClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
-  return res.data;
+  try {
+    const res = await apiClient.post(API_ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
+    return res.data;
+  } catch (error:any) {
+    throw {message:error.message};
+  }
 };
 
 export const getMeApi = async () => {
@@ -101,7 +105,10 @@ export const changePasswordApi = async (data: ChangePasswordData) => {
 // -----------------------------
 export const getProjectsApi = async () => {
   const res = await apiClient.get(API_ENDPOINTS.PROJECTS.GET);
-  // console.log(res)
+  if (import.meta.env.DEV) {
+    console.log("[projects] GET response:", res.data);
+  }
+
   return res.data;
 };
 
@@ -319,7 +326,7 @@ export const getSettingsApi = async () => {
 
 export const updateSettingsApi = async (formData: FormData) => {
   try {
-    const { data } = await apiClient.put(API_ENDPOINTS.IDENTITY.UPDATE,formData);
+    const { data } = await apiClient.put(API_ENDPOINTS.IDENTITY.UPDATE, formData);
     return data.data;
   } catch (error: any) {
     throw error?.response?.data || {

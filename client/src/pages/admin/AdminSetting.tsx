@@ -3,7 +3,6 @@ import { motion } from "motion/react";
 import {
     User,
     Lock,
-    Settings,
     Save,
     UploadCloud,
     X, Eye, EyeOff, LockIcon
@@ -189,7 +188,6 @@ const handleProfileUpdate = async () => {
     const tabs = [
         { id: "profile", label: "Profile", icon: <User size={16} /> },
         { id: "security", label: "Security", icon: <Lock size={16} /> },
-        { id: "preferences", label: "Preferences", icon: <Settings size={16} /> },
     ];
 
     return (
@@ -198,7 +196,7 @@ const handleProfileUpdate = async () => {
             <div>
                 <h1 className="text-3xl font-bold">Settings</h1>
                 <p className="text-white/40 text-sm">
-                    Manage your account and preferences
+                    Manage your account
                 </p>
             </div>
 
@@ -580,98 +578,6 @@ const handleProfileUpdate = async () => {
                         </div>
                     </div>
                 )}
-
-                {/* ---------------- PREFERENCES ---------------- */}
-                {activeTab === "preferences" && (
-                    <div className="space-y-6 max-w-full">
-
-                        {/* Header */}
-                        <div>
-                            <h2 className="text-xl font-semibold">Preferences</h2>
-                            <p className="text-sm text-white/40">
-                                Customize your experience and system behavior
-                            </p>
-                        </div>
-
-                        {/* Settings List */}
-                        <div className="space-y-4">
-
-                            {/* Dark Mode */}
-                            <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5">
-                                <div>
-                                    <p className="text-sm font-medium text-white">Dark Mode</p>
-                                    <p className="text-xs text-white/40">
-                                        Enable dark theme across dashboard
-                                    </p>
-                                </div>
-
-                                {/* Toggle Switch */}
-                                <button
-                                    onClick={() =>
-                                        setPreferences((prev) => ({
-                                            ...prev,
-                                            darkMode: !prev.darkMode,
-                                        }))
-                                    }
-                                    className={`relative w-12 h-6 rounded-full transition ${preferences.darkMode ? "bg-accent" : "bg-white/20"
-                                        }`}
-                                >
-                                    <span
-                                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition ${preferences.darkMode ? "translate-x-6" : ""
-                                            }`}
-                                    />
-                                </button>
-                            </div>
-
-                            {/* Email Notifications */}
-                            <div className="flex items-center justify-between p-4 rounded-xl bg-white/5 border border-white/5">
-                                <div>
-                                    <p className="text-sm font-medium text-white">
-                                        Email Notifications
-                                    </p>
-                                    <p className="text-xs text-white/40">
-                                        Receive updates and alerts via email
-                                    </p>
-                                </div>
-
-                                <button
-                                    onClick={() =>
-                                        setPreferences((prev) => ({
-                                            ...prev,
-                                            emailNotifications: !prev.emailNotifications,
-                                        }))
-                                    }
-                                    className={`relative w-12 h-6 rounded-full transition ${preferences.emailNotifications
-                                        ? "bg-accent-secondary"
-                                        : "bg-white/20"
-                                        }`}
-                                >
-                                    <span
-                                        className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition ${preferences.emailNotifications ? "translate-x-6" : ""
-                                            }`}
-                                    />
-                                </button>
-                            </div>
-
-                        </div>
-
-                        {/* Save Button */}
-                        <div className="flex justify-end pt-2">
-                            <button
-                                onClick={() => {
-                                    // future API call
-                                    setMessage("Preferences saved ✅");
-                                }}
-                                className="flex items-center px-8 py-3 bg-accent text-white rounded-xl font-bold uppercase tracking-widest text-xs hover:bg-accent/80 transition-all hover:scale-105 shadow-[0_10px_30px_rgba(124,58,237,0.3)]"
-
-                            >
-                                Save Preferences
-                            </button>
-                        </div>
-
-                    </div>
-                )}
-
             </motion.div>
 
             {message && <div className="text-accent">{message}</div>}

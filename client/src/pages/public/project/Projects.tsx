@@ -17,7 +17,12 @@ export const Projects: React.FC = () => {
       try {
         const response = await getProjectsApi();
         // set fetched projects and cache
+        if (import.meta.env.DEV) {
+          console.log("[projects] fetched in component:", response);
+        }
+
         setProjects(response);
+
         try {
           sessionStorage.setItem('projectsCache', JSON.stringify(response));
           sessionStorage.setItem('projectsLoaded', 'true');

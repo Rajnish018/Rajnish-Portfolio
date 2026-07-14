@@ -44,10 +44,13 @@ export default defineConfig(({ mode }) => {
       chunkSizeWarningLimit: 1000,
     },
 
-    // 🔥 Faster dev + smaller prod builds
-    esbuild: {
-      drop: ["console", "debugger"], // remove logs in production
-    },
+    // Remove debug statements only from production builds.
+    esbuild:
+      mode === "production"
+        ? {
+            drop: ["console", "debugger"],
+          }
+        : {},
 
     // 🔥 Optimize dependency pre-bundling
     optimizeDeps: {

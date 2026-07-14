@@ -7,7 +7,6 @@ import { Navbar, Footer } from "./components/Layout";
 import { CustomCursor, LoadingScreen } from "./components/UI";
 import { AdminLayout } from "./components/AdminLayout";
 
-
 // Pages
 import { Home } from "./pages/public/home/Home";
 import { About } from "./pages/public/About";
@@ -16,6 +15,9 @@ import { Contact } from "./pages/public/Contact";
 import { NotFound } from "./pages/public/NotFound";
 
 import { AdminLogin } from "./pages/public/AdminLogin";
+// ➕ IMPORT THE NEW RESET PASSWORD PAGE HERE
+import { ResetPassword } from "./pages/admin/ResetPassword"; 
+
 import { AdminDashboard } from "./pages/admin/AdminDashboard";
 import { AdminProjects } from "./pages/admin/AdminProjects";
 import { AdminSkills } from "./pages/admin/AdminSkills";
@@ -62,12 +64,12 @@ const AppContent: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Hide Navbar/Footer for admin routes
-  const isAdminRoute = location.pathname.startsWith("/admin");
+  // Hide Navbar/Footer for admin routes AND the reset password page if preferred
+  // Added a check so the public layout drops out for a clean reset interface
+  const isAdminRoute = location.pathname.startsWith("/admin") || location.pathname === "/reset-password";
 
   return (
     <>
-    
       {/* Loading Screen */}
       <AnimatePresence>{loading && <LoadingScreen />}</AnimatePresence>
 
@@ -86,7 +88,18 @@ const AppContent: React.FC = () => {
               <Route path="/projects" element={<PageTransition><Projects /></PageTransition>} />
               <Route path="/archive" element={<PageTransition><Projects /></PageTransition>} />
               <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
-             <Route path="/back"  element={<PageTransition><BackgroundPattern /></PageTransition>} />
+              <Route path="/back" element={<PageTransition><BackgroundPattern /></PageTransition>} />
+
+              {/* ---------------- PASSWORD RESET LINK ---------------- */}
+              {/* ➕ REGISTER THE RESET ROUTE HERE */}
+              <Route 
+                path="/reset-password" 
+                element={
+                  <PageTransition>
+                    <ResetPassword />
+                  </PageTransition>
+                } 
+              />
 
               {/* ---------------- ADMIN LOGIN ---------------- */}
               <Route path="/admin/login" element={<AdminLogin />} />
@@ -104,13 +117,11 @@ const AppContent: React.FC = () => {
                 <Route path="projects" element={<AdminProjects />} />
                 <Route path="team" element={<AdminTeam />} />
                 <Route path="skills" element={<AdminSkills />} />
-                <Route path="messages" element={<AdminMessages/>} /> 
+                <Route path="messages" element={<AdminMessages />} /> 
                 <Route path="analytics" element={<AdminAnalytics />} />
                 <Route path="experience" element={<AdminExperience />} />
                 <Route path="settings" element={<AdminSettings />} />
-                <Route path="links" element={<AdminLinks/>} />
-
-
+                <Route path="links" element={<AdminLinks />} />
               </Route>
 
               {/* ---------------- 404 ---------------- */}

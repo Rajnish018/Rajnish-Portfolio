@@ -1,55 +1,98 @@
 import React, { useEffect, useRef } from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 
-
-export const CustomCursor: React.FC = () => {
-  const cursorRef = useRef<HTMLDivElement>(null);
-  const followerRef = useRef<HTMLDivElement>(null);
+export const CustomCursor = () => {
+  const cursor = useRef<HTMLDivElement>(null);
+  const follower = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const moveCursor = (e: MouseEvent) => {
-      if (!cursorRef.current || !followerRef.current) return;
+    let mouseX = 0;
+    let mouseY = 0;
 
-      const { clientX: x, clientY: y } = e;
+    let followerX = 0;
+    let followerY = 0;
 
-      cursorRef.current.style.transform = `translate3d(${x - 16}px, ${y - 16}px, 0)`;
-      followerRef.current.style.transform = `translate3d(${x - 24}px, ${y - 24}px, 0)`;
-    };
+    const move = (e: MouseEvent) => {
+      mouseX = e.clientX;
+      mouseY = e.clientY;
 
-    const handleMouseOver = (e: Event) => {
-      const target = e.target as HTMLElement;
-
-      const isInteractive =""
-        target.closest("select")
-
-      if (!cursorRef.current || !followerRef.current) return;
-
-      if (isInteractive) {
-        cursorRef.current.classList.add("cursor-hidden");
-        followerRef.current.classList.add("cursor-hidden");
-      } else {
-        cursorRef.current.classList.remove("cursor-hidden");
-        followerRef.current.classList.remove("cursor-hidden");
+      if (cursor.current) {
+        cursor.current.style.transform = `translate3d(${mouseX}px, ${mouseY}px,0) translate(-50%,-50%)`;
       }
     };
 
-    window.addEventListener("mousemove", moveCursor);
-    window.addEventListener("mouseover", handleMouseOver);
+    let animationFrameId = 0;
+
+    const animateFollower = () => {
+      followerX += (mouseX - followerX) * 0.15;
+      followerY += (mouseY - followerY) * 0.15;
+
+      if (follower.current) {
+        follower.current.style.transform = `translate3d(${followerX}px, ${followerY}px,0) translate(-50%,-50%)`;
+      }
+
+      animationFrameId = requestAnimationFrame(animateFollower);
+    };
+
+    animateFollower();
+
+    const interactiveSelector =
+      "a,button,input,textarea,select,label,[role='button'],.cursor-hover";
+
+    const textSelector =
+      "p,h1,h2,h3,h4,h5,h6,span,strong,em,li";
+
+    let activeTextElement: HTMLElement | null = null;
+
+    const updateCursor = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const textElement = target.closest(textSelector) as HTMLElement | null;
+
+      // Interactive elements
+      if (target.closest(interactiveSelector)) {
+        cursor.current?.classList.add("cursor-active");
+        follower.current?.classList.add("cursor-active");
+      } else {
+        cursor.current?.classList.remove("cursor-active");
+        follower.current?.classList.remove("cursor-active");
+      }
+
+      // Text elements
+      if (textElement) {
+        cursor.current?.classList.add("cursor-text");
+        follower.current?.classList.add("cursor-text");
+
+        if (activeTextElement !== textElement) {
+          activeTextElement?.classList.remove("cursor-text-target");
+          activeTextElement = textElement;
+          activeTextElement.classList.add("cursor-text-target");
+        }
+      } else {
+        cursor.current?.classList.remove("cursor-text");
+        follower.current?.classList.remove("cursor-text");
+        activeTextElement?.classList.remove("cursor-text-target");
+        activeTextElement = null;
+      }
+    };
+
+    window.addEventListener("mousemove", move);
+    document.addEventListener("mousemove", updateCursor);
 
     return () => {
-      window.removeEventListener("mousemove", moveCursor);
-      window.removeEventListener("mouseover", handleMouseOver);
+      window.removeEventListener("mousemove", move);
+      document.removeEventListener("mousemove", updateCursor);
+      cancelAnimationFrame(animationFrameId);
+      activeTextElement?.classList.remove("cursor-text-target");
     };
   }, []);
 
   return (
     <>
-      <div ref={cursorRef} className="custom-cursor" />
-      <div ref={followerRef} className="custom-cursor-follower" />
+      <div ref={cursor} className="custom-cursor" />
+      <div ref={follower} className="custom-cursor-follower" />
     </>
   );
 };
-
 export const LoadingScreen: React.FC = () => {
   return (
     <motion.div
@@ -59,7 +102,7 @@ export const LoadingScreen: React.FC = () => {
       className="fixed inset-0 z-10000 bg-bg flex items-center justify-center"
     >
       <div className="relative flex items-center justify-center">
-        
+
         {/* Outer Circle (Anticlockwise) */}
         <motion.div
           animate={{

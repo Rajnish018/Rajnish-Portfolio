@@ -1,11 +1,11 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from "axios";
 
-
 const RENDER_SERVER_URL =  import.meta.env.VITE_API_URL ||"http://localhost:5000/api";
 
-  // 
-  
-// console.log(RENDER_SERVER_URL)
+
+if (import.meta.env.DEV) {
+  console.log("[api] baseURL:", RENDER_SERVER_URL);
+}
 
 const apiClient = axios.create({
   baseURL: RENDER_SERVER_URL,
@@ -22,12 +22,19 @@ apiClient.interceptors.request.use(
     }
 
     // Handle FormData automatically
-    
     if (config.data instanceof FormData) {
       // Let Axios set Content-Type automatically
       delete config.headers["Content-Type"];
     } else {
       config.headers["Content-Type"] = "application/json";
+    }
+
+    if (import.meta.env.DEV) {
+      console.log("[api] request:", {
+        method: config.method,
+        url: config.url,
+        hasToken: Boolean(token),
+      });
     }
 
     return config;
@@ -37,7 +44,17 @@ apiClient.interceptors.request.use(
 
 // RESPONSE
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (import.meta.env.DEV) {
+      console.log("[api] response:", {
+        method: response.config.method,
+        url: response.config.url,
+        status: response.status,
+      });
+    }
+
+    return response;
+  },
   (error: AxiosError<any>) => {
     if (!error.response) {
       console.error("Network Error:", error.message);
@@ -48,7 +65,9 @@ apiClient.interceptors.response.use(
 
     const { status, data } = error.response;
 
-    if (status === 401) {
+    const isLoginRequest = error.config?.url?.includes("/auth/login");
+
+    if (status === 401 && !isLoginRequest) {
       console.warn("Unauthorized");
 
       localStorage.removeItem("token");

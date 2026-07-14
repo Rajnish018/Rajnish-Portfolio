@@ -17,7 +17,7 @@ export const AdminLogin: React.FC = () => {
   const [showForgot, setShowForgot] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const [resetLoading, setResetLoading] = useState(false);
-  
+
   const navigate = useNavigate();
   const { login } = useAuth();
   const { showToast } = useToast();
@@ -28,20 +28,22 @@ export const AdminLogin: React.FC = () => {
 
     try {
       await login({ email, password });
-      
 
-      // ✅ Step 1: Wait briefly for user to see the success toast
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      // ✅ Step 2: Switch to full-screen loading state
-      setLoading(false);
-      setIsRedirecting(true);
-
+      // Show toast first
       showToast("Login successful!", "success");
 
-      // ✅ Step 3: Final delay for the "loading dashboard" feel before navigating
+      // Stop button spinner
+      setLoading(false);
+
+      // Let user see toast
+      await new Promise(resolve => setTimeout(resolve, 700));
+
+      // Show loading screen
+      setIsRedirecting(true);
+
+      // Navigate
       setTimeout(() => {
-        navigate('/admin/dashboard');
+        navigate("/admin/dashboard");
       }, 1500);
 
     } catch (err: any) {
@@ -60,11 +62,15 @@ export const AdminLogin: React.FC = () => {
 
     try {
       const response = await forgotPasswordApi(resetEmail.trim());
-      showToast(response.message || "If the account exists, a reset link has been sent.", "success");
+
+      showToast(response.message || "Reset link has been sent successfully.", "success");
       setResetEmail("");
       setShowForgot(false);
     } catch (error: any) {
-      showToast(error.message || "Failed to send reset link.", "error");
+
+      const backendErrorMessage = error?.message || (typeof error === 'string' ? error : "Failed to send reset link.");
+
+      showToast(backendErrorMessage, "error");
     } finally {
       setResetLoading(false);
     }
@@ -79,13 +85,13 @@ export const AdminLogin: React.FC = () => {
     <div className="min-h-screen bg-bg flex items-center justify-center px-6 relative overflow-hidden">
       {/* Background Ambient Glow */}
       <div className="absolute top-[-10%] left-[-10%] w-96 h-96 bg-accent/10 blur-[120px] rounded-full" />
-      
+
       <div className="absolute top-8 left-8 z-10">
         <button
           onClick={() => navigate('/')}
           className="flex items-center text-white/40 hover:text-white transition-colors text-xs uppercase tracking-widest font-bold group"
         >
-          <Home size={16} className="mr-2 group-hover:-translate-y-0.5 transition-transform" /> 
+          <Home size={16} className="mr-2 group-hover:-translate-y-0.5 transition-transform" />
           Return to Home
         </button>
       </div>
@@ -128,7 +134,7 @@ export const AdminLogin: React.FC = () => {
                 Forgot?
               </button>
             </div>
-            
+
             <div className="relative group">
               <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20" size={18} />
               <input
@@ -160,7 +166,7 @@ export const AdminLogin: React.FC = () => {
               </span>
             ) : (
               <>
-                Sign In 
+                Sign In
                 <ArrowRight size={18} className="ml-3 group-hover:translate-x-1 transition-transform" />
               </>
             )}
@@ -176,7 +182,7 @@ export const AdminLogin: React.FC = () => {
       <AnimatePresence>
         {showForgot && (
           <div className="fixed inset-0 flex items-center justify-center z-[100] p-6">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}

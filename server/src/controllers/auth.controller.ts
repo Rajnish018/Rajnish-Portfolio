@@ -4,6 +4,7 @@ import User from "../models/user.model";
 import { generateToken } from "../utils/generateToken";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { sendForgotPasswordEmail } from "../mail/mail.service";
 
 // ---------------- REGISTER ----------------
 export const registerUser = async (req: Request, res: Response) => {
@@ -94,14 +95,17 @@ export const forgotPassword = async (req: Request, res: Response) => {
   try {
     const { email } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ message: "Email is required" });
+    if (!email || typeof email !== "string") {
+      return res.status(400).json({ message: "A vaild email is required" });
     }
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.json({ message: "If the account exists, a reset link has been sent" });
+    const normalisedEmail=email.trim().toLowerCase();
+    const user = await User.findOne({ email:normalisedEmail });
+
+    if (!user || user.role!=="admin") {
+      return res.status(403).json({ message: "Only admin users can reset password" });
     }
+
 
     const token = crypto.randomBytes(32).toString("hex");
     const expires = new Date(Date.now() + 1000 * 60 * 60); // 1 hour
@@ -110,9 +114,17 @@ export const forgotPassword = async (req: Request, res: Response) => {
     user.resetPasswordExpires = expires;
     await user.save();
 
+    const resetUrl=`${ process.env.LOCAL_FRONTEND_URL 
+      // ||process.env.VERCEL_FORNTEND_URL
+    }/reset-password?token=${token}`;
+
+    console.log(resetUrl)
+
+    await sendForgotPasswordEmail(user.email, resetUrl);
+
     console.log(`Password reset token for ${email}: ${token}`);
 
-    res.json({ message: "If the account exists, a reset link has been sent" });
+    res.json({ message: "Reset link has been sent successfully" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });

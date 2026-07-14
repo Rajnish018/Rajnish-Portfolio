@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { BarChart3, Layers, TrendingUp } from "lucide-react";
 import { getAnalyticsApi } from "../../services/apiService";
+import Loader from "@/src/components/Loader";
 
 // -----------------------------
 // TYPES
@@ -45,11 +46,12 @@ export const AdminAnalytics: React.FC = () => {
   // -----------------------------
   if (loading) {
     return (
-      <div className="text-center text-white py-20">
-        Loading analytics...
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader message="Synchronizing Workspace..." />
       </div>
     );
   }
+
 
   if (error) {
     return (
