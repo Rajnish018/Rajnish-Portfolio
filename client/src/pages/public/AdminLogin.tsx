@@ -1,104 +1,231 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Lock, Mail, ArrowRight, Home, Eye, EyeOff } from 'lucide-react';
 
-const usePointerDevice = () => {
-  // null = "not determined yet" — prevents a flash of the wrong behavior on first paint
-  const [isFinePointer, setIsFinePointer] = useState<boolean | null>(null);
+import { useAuth } from '../../contexts/AuthContext';
+import { useToast } from '../../contexts/ToastContext';
+import { forgotPasswordApi } from '../../services/apiService';
+import { LoadingScreen } from '@/src/components/UI';
 
-  useEffect(() => {
-    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
-    const update = () => setIsFinePointer(mq.matches);
+export const AdminLogin: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showForgot, setShowForgot] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
 
-    update();
-    mq.addEventListener("change", update);
-    return () => mq.removeEventListener("change", update);
-  }, []);
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const { showToast } = useToast();
 
-  return isFinePointer;
-};
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
 
-export const CustomCursor = () => {
-  const cursor = useRef<HTMLDivElement>(null);
-  const follower = useRef<HTMLDivElement>(null);
-  const isFinePointer = usePointerDevice();
+    try {
+      await login({ email, password });
+      showToast("Login successful!", "success");
+      setLoading(false);
+      await new Promise(resolve => setTimeout(resolve, 700));
+      setIsRedirecting(true);
+      setTimeout(() => {
+        navigate("/admin/dashboard");
+      }, 1500);
+    } catch (err: any) {
+      setLoading(false);
+      showToast(err.message || "Login failed. Please check your credentials.", "error");
+    }
+  };
 
-  useEffect(() => {
-    if (!isFinePointer) return; // covers both "false" (touch) and "null" (not determined yet)
+  const handleSendResetLink = async () => {
+    if (!resetEmail.trim()) {
+      showToast("Please enter your admin email.", "error");
+      return;
+    }
 
-    let mouseX = 0;
-    let mouseY = 0;
-    let followerX = 0;
-    let followerY = 0;
-    let animationFrameId = 0;
+    setResetLoading(true);
 
-    const move = (e: MouseEvent) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      if (cursor.current) {
-        cursor.current.style.transform = `translate3d(${mouseX}px, ${mouseY}px,0) translate(-50%,-50%)`;
-      }
-    };
+    try {
+      const response = await forgotPasswordApi(resetEmail.trim());
+      showToast(response.message || "Reset link has been sent successfully.", "success");
+      setResetEmail("");
+      setShowForgot(false);
+    } catch (error: any) {
+      const backendErrorMessage = error?.message || (typeof error === 'string' ? error : "Failed to send reset link.");
+      showToast(backendErrorMessage, "error");
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
-    const animateFollower = () => {
-      followerX += (mouseX - followerX) * 0.15;
-      followerY += (mouseY - followerY) * 0.15;
-      if (follower.current) {
-        follower.current.style.transform = `translate3d(${followerX}px, ${followerY}px,0) translate(-50%,-50%)`;
-      }
-      animationFrameId = requestAnimationFrame(animateFollower);
-    };
-    animateFollower();
-
-    const interactiveSelector =
-      "a,button,input,textarea,select,label,[role='button'],.cursor-hover";
-    const textSelector = "p,h1,h2,h3,h4,h5,h6,span,strong,em,li";
-    let activeTextElement: HTMLElement | null = null;
-
-    const updateCursor = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const textElement = target.closest(textSelector) as HTMLElement | null;
-
-      if (target.closest(interactiveSelector)) {
-        cursor.current?.classList.add("cursor-active");
-        follower.current?.classList.add("cursor-active");
-      } else {
-        cursor.current?.classList.remove("cursor-active");
-        follower.current?.classList.remove("cursor-active");
-      }
-
-      if (textElement) {
-        cursor.current?.classList.add("cursor-text");
-        follower.current?.classList.add("cursor-text");
-        if (activeTextElement !== textElement) {
-          activeTextElement?.classList.remove("cursor-text-target");
-          activeTextElement = textElement;
-          activeTextElement.classList.add("cursor-text-target");
-        }
-      } else {
-        cursor.current?.classList.remove("cursor-text");
-        follower.current?.classList.remove("cursor-text");
-        activeTextElement?.classList.remove("cursor-text-target");
-        activeTextElement = null;
-      }
-    };
-
-    window.addEventListener("mousemove", move);
-    document.addEventListener("mousemove", updateCursor);
-
-    return () => {
-      window.removeEventListener("mousemove", move);
-      document.removeEventListener("mousemove", updateCursor);
-      cancelAnimationFrame(animationFrameId);
-      activeTextElement?.classList.remove("cursor-text-target");
-    };
-  }, [isFinePointer]);
-
-  // Don't render on touch devices, and don't render before we know (avoids SSR/hydration mismatch)
-  if (!isFinePointer) return null;
+  if (isRedirecting) {
+    return <LoadingScreen />;
+  }
 
   return (
-    <>
-      <div ref={cursor} className="custom-cursor" />
-      <div ref={follower} className="custom-cursor-follower" />
-    </>
+    <div className="min-h-screen bg-bg flex items-center justify-center px-4 sm:px-6 relative overflow-hidden">
+      {/* Background Ambient Glow */}
+      <div className="absolute top-[-10%] left-[-10%] w-64 h-64 sm:w-96 sm:h-96 bg-accent/10 blur-[80px] sm:blur-[120px] rounded-full" />
+
+      <div className="absolute top-4 left-4 sm:top-8 sm:left-8 z-10">
+        <button
+          onClick={() => navigate('/')}
+          className="flex items-center text-white/40 hover:text-white transition-colors text-[10px] sm:text-xs uppercase tracking-widest font-bold group"
+        >
+          <Home size={14} className="mr-1.5 sm:mr-2 sm:size-4 group-hover:-translate-y-0.5 transition-transform" />
+          <span className="hidden xs:inline">Return to Home</span>
+          <span className="xs:hidden">Home</span>
+        </button>
+      </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-md glass-card p-6 sm:p-10 md:p-16 text-center relative z-10"
+      >
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-display font-bold mb-2 sm:mb-4 tracking-tighter">
+          Admin Login
+        </h1>
+        <p className="text-white/40 text-xs sm:text-sm mb-8 sm:mb-12 uppercase tracking-widest font-medium">
+          Welcome back, Architect.
+        </p>
+
+        <form onSubmit={handleLogin} className="space-y-5 sm:space-y-8 text-left">
+          {/* Email Field */}
+          <div className="space-y-1.5 sm:space-y-2">
+            <label className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold ml-1">
+              Email Access
+            </label>
+            <div className="relative">
+              <Mail className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-white/20" size={16} />
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="architect@labs.com"
+                className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 sm:pl-12 pr-4 sm:pr-6 py-3 sm:py-4 text-sm sm:text-base focus:border-accent focus:bg-white/[0.08] focus:outline-none transition-all"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Password Field */}
+          <div className="space-y-1.5 sm:space-y-2">
+            <div className="flex justify-between items-center ml-1">
+              <label className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] text-white/40 font-bold">
+                Security Key
+              </label>
+              <button
+                type="button"
+                onClick={() => setShowForgot(true)}
+                className="text-[9px] sm:text-[10px] uppercase tracking-widest text-accent font-bold hover:text-white transition-colors"
+              >
+                Forgot?
+              </button>
+            </div>
+
+            <div className="relative group">
+              <Lock className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-white/20" size={16} />
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••••"
+                className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 sm:pl-12 pr-11 sm:pr-12 py-3 sm:py-4 text-sm sm:text-base focus:border-accent focus:bg-white/[0.08] focus:outline-none transition-all placeholder:text-white/10"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3.5 sm:right-4 top-1/2 -translate-y-1/2 text-white/30 hover:text-white transition-colors"
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+          </div>
+
+          <button
+            disabled={loading}
+            className="group w-full py-4 sm:py-5 bg-accent text-white rounded-xl text-sm sm:text-base font-bold uppercase tracking-[0.15em] sm:tracking-[0.2em] flex items-center justify-center hover:bg-accent/80 active:scale-[0.98] transition-all shadow-[0_10px_40px_rgba(124,58,237,0.2)] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <span className="flex items-center gap-2.5 sm:gap-3">
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                Authenticating...
+              </span>
+            ) : (
+              <>
+                Sign In
+                <ArrowRight size={16} className="ml-2.5 sm:ml-3 sm:size-[18px] group-hover:translate-x-1 transition-transform" />
+              </>
+            )}
+          </button>
+        </form>
+
+        <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-white/5">
+          <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.3em] sm:tracking-[0.4em] text-white/10 font-bold italic">
+            Secure Encrypted Session
+          </p>
+        </div>
+      </motion.div>
+
+      {/* Forgot Password Modal */}
+      <AnimatePresence>
+        {showForgot && (
+          <div className="fixed inset-0 flex items-center justify-center z-[100] p-4 sm:p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowForgot(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-md"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-zinc-900 border border-white/10 rounded-2xl p-6 sm:p-8 w-full max-w-sm relative z-[110] shadow-2xl"
+            >
+              <h2 className="text-lg sm:text-xl font-display font-bold mb-2">Reset Password</h2>
+              <p className="text-xs sm:text-sm text-white/40 mb-6 sm:mb-8 leading-relaxed">
+                Instructions will be sent to your registered administrative email.
+              </p>
+
+              <div className="relative mb-6 sm:mb-8">
+                <Mail className="absolute left-3.5 sm:left-4 top-1/2 -translate-y-1/2 text-white/20" size={16} />
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="Admin Email"
+                  className="w-full bg-white/5 border border-white/10 rounded-xl pl-11 sm:pl-12 pr-4 py-2.5 sm:py-3 text-sm sm:text-base focus:border-accent outline-none transition-all"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2.5 sm:gap-3">
+                <button
+                  onClick={handleSendResetLink}
+                  disabled={resetLoading}
+                  className="w-full py-2.5 sm:py-3 rounded-xl bg-accent text-white text-xs sm:text-sm font-bold uppercase tracking-widest hover:bg-accent/80 transition-all shadow-lg shadow-accent/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {resetLoading ? "Sending..." : "Send Reset Link"}
+                </button>
+                <button
+                  onClick={() => setShowForgot(false)}
+                  className="w-full py-2.5 sm:py-3 rounded-xl bg-white/5 hover:bg-white/10 text-[10px] sm:text-xs uppercase tracking-widest font-bold transition-all text-white/40"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
