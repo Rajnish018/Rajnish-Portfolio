@@ -1,11 +1,23 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useState,useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
 export const CustomCursor = () => {
   const cursor = useRef<HTMLDivElement>(null);
   const follower = useRef<HTMLDivElement>(null);
+  const [isTouchDevice, setIsTouchDevice] = useState(true); // default true avoids a cursor flash on mobile before check runs
 
   useEffect(() => {
+    const mq = window.matchMedia("(hover: hover) and (pointer: fine)");
+    const check = () => setIsTouchDevice(!mq.matches);
+
+    check();
+    mq.addEventListener("change", check);
+    return () => mq.removeEventListener("change", check);
+  }, []);
+
+  useEffect(() => {
+    if (isTouchDevice) return; // skip all mouse tracking / rAF on touch devices
+
     let mouseX = 0;
     let mouseY = 0;
 
@@ -84,7 +96,9 @@ export const CustomCursor = () => {
       cancelAnimationFrame(animationFrameId);
       activeTextElement?.classList.remove("cursor-text-target");
     };
-  }, []);
+  }, [isTouchDevice]);
+
+  if (isTouchDevice) return null; // don't render cursor elements at all on touch devices
 
   return (
     <>
