@@ -22,6 +22,9 @@ import ProjectSlideshow from './ProjectSlideshow';
 
 // 3. Main Featured Projects Component
 const FeaturedProjects: React.FC<FeaturedProjectsProps> = ({ projects, loading }) => {
+  useEffect(() => {
+      
+  }, [projects]);
   if (loading) {
     return (
       <div className="flex min-h-[300px] w-full items-center justify-center">

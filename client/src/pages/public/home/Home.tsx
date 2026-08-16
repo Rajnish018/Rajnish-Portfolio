@@ -8,7 +8,7 @@ import Features from '../../../components/Feature';
 import CTA from '../../../components/Cta';
 import { getProjectsApi } from '@/src/services/apiService';
 import SEO from '@/src/components/SEO';
-import FeaturedProjects from '../../../components/FeaturedProjects'; // Adjust import path as needed
+import FeaturedProjects from '../../../components/FeaturedProjects';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -18,68 +18,86 @@ export const Home: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProjects = async (suppressLoading = false) => {
+    let mounted = true;
+
+    const fetchProjects = async () => {
       try {
-        const data = await getProjectsApi();
-        setProjects(data);
-        try {
-          sessionStorage.setItem('projectsCache', JSON.stringify(data));
-          sessionStorage.setItem('projectsLoaded', 'true');
-        } catch (e) {
-          // ignore session storage errors
+        const cached = sessionStorage.getItem("projectsCache");
+
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (Array.isArray(parsed) && parsed.length > 0 && mounted) {
+              setProjects(parsed);
+              setLoading(false);
+            }
+          } catch {
+            sessionStorage.removeItem("projectsCache");
+          }
         }
-      } catch (err) {
-        console.error(err);
+
+        const data = await getProjectsApi();
+        if (!mounted) return;
+
+        if (Array.isArray(data)) {
+          setProjects(data);
+          sessionStorage.setItem("projectsCache", JSON.stringify(data));
+        }
+      } catch (error) {
+        console.error("Failed to fetch projects:", error);
       } finally {
-        if (!suppressLoading) setLoading(false);
+        if (mounted) setLoading(false);
       }
     };
 
-    try {
-      const cached = sessionStorage.getItem('projectsCache');
-      const loadedFlag = sessionStorage.getItem('projectsLoaded');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) setProjects(parsed);
-      }
-
-      if (loadedFlag === 'true') {
-        // already fetched this session — don't show loader, fetch in background
-        setLoading(false);
-        fetchProjects(true);
-      } else {
-        // first time in session: show loader
-        fetchProjects(false);
-      }
-    } catch (e) {
-      fetchProjects(false);
-    }
+    fetchProjects();
+    return () => { mounted = false; };
   }, []);
 
   useLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-      const mm = gsap.matchMedia();
-      mm.add("(min-width: 768px)", () => {
-        gsap.utils.toArray(".project-card").forEach((card: any) => {
-          gsap.fromTo(card,
-            { opacity: 0, y: 50 },
-            {
-              opacity: 1, 
-              y: 0, 
-              duration: 1, 
-              ease: "power3.out",
-              scrollTrigger: {
-                trigger: card,
-                start: "top 90%",
-                toggleActions: "play none none reverse",
-              },
-            }
-          );
-        });
+  const ctx = gsap.context(() => {
+    const mm = gsap.matchMedia();
+
+    const animateCards = (yOffset: number, duration: number, ease: string) => {
+      gsap.utils.toArray(".project-card").forEach((card: any) => {
+        gsap.fromTo(card,
+          { opacity: 0, y: yOffset },
+          {
+            opacity: 1,
+            y: 0,
+            duration,
+            ease,
+            scrollTrigger: {
+              trigger: card,
+              start: "top 88%",
+              end: "bottom 20%",
+              toggleActions: "play none none reverse", // show on the way down, hide on the way back up
+              // markers: true, // uncomment while debugging trigger points
+            },
+          }
+        );
       });
-    }, containerRef);
-    return () => ctx.revert();
-  }, [projects]);
+    };
+
+    mm.add("(min-width: 768px)", () => animateCards(50, 1, "power3.out"));
+    mm.add("(max-width: 767px)", () => animateCards(20, 0.6, "power2.out"));
+    mm.add("(prefers-reduced-motion: reduce)", () => {
+      gsap.set(".project-card", { opacity: 1, y: 0 });
+    });
+
+    // Recalculate trigger positions once images/layout settle,
+    // otherwise cards can hide/show at the wrong scroll offset.
+    const refresh = () => ScrollTrigger.refresh();
+    window.addEventListener("load", refresh);
+    const t = setTimeout(refresh, 500); // catch late image loads
+    return () => {
+      window.removeEventListener("load", refresh);
+      clearTimeout(t);
+    };
+  }, containerRef);
+
+  return () => ctx.revert();
+}, [projects, loading]); // re-run once loading flips false and real cards mount
 
   return (
     <SEO
@@ -89,22 +107,28 @@ export const Home: React.FC = () => {
       url="https://rajnish-kumar-portfolio.vercel.app/"
       image="https://rajnish-kumar-portfolio.vercel.app/og-ai-portfolio.png"
     >
-      <div ref={containerRef} className="min-h-screen pt-16 md:pt-24 bg-background text-white">
+      <div ref={containerRef} className="min-h-screen pt-16 md:pt-24 bg-background text-white overflow-x-hidden">
         <Hero />
 
         {/* Featured Works Section */}
-        <section className="px-6 py-20 max-w-7xl mx-auto">
-          <div className="flex items-end justify-between mb-16 border-b border-white/5 pb-8">
+        <section className="px-4 sm:px-6 py-12 sm:py-16 md:py-20 max-w-7xl mx-auto">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 sm:gap-0 mb-10 sm:mb-16 border-b border-white/5 pb-6 sm:pb-8">
             <div>
-              <h2 className="text-3xl font-display font-bold mb-2 uppercase tracking-tight">Featured Works</h2>
-              <p className="text-white/40 text-[10px] uppercase tracking-[0.3em]">Selected Experiments 2024-2026</p>
+              <h2 className="text-2xl sm:text-3xl font-display font-bold mb-2 uppercase tracking-tight">
+                Featured Works
+              </h2>
+              <p className="text-white/40 text-[10px] uppercase tracking-[0.3em]">
+                Selected Experiments 2024-2026
+              </p>
             </div>
-            <Link to="/projects" className="flex items-center text-white/40 hover:text-accent transition-all text-[10px] uppercase tracking-[0.2em]">
+            <Link
+              to="/projects"
+              className="flex items-center text-white/40 hover:text-accent transition-all text-[10px] uppercase tracking-[0.2em] self-start sm:self-auto"
+            >
               Explore Archive <ArrowRight size={14} className="ml-2" />
             </Link>
           </div>
 
-          {/* Cleaned up implementation using the new component */}
           <FeaturedProjects projects={projects.slice(0, 4)} loading={loading} />
         </section>
 
