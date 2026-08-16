@@ -89,7 +89,7 @@ export const About: React.FC = () => {
               Architect by training, digital experience designer by passion. I bridge the gap between physical space and digital interfaces.
             </p>
             <div className="flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-6 justify-center lg:justify-start">
-              <a href="mailto:yourname@example.com" className="px-6 sm:px-8 py-3.5 sm:py-4 bg-accent rounded-xl font-medium hover:bg-accent/80 transition-all hover:scale-105 flex items-center justify-center">
+              <a href="mailto:rajnish.kumar.23co@iitram.ac.in?subject=Let's Collaborate&body=Hi Rajnish," className="px-6 sm:px-8 py-3.5 sm:py-4 bg-accent rounded-xl font-medium hover:bg-accent/80 transition-all hover:scale-105 flex items-center justify-center">
                 Let&apos;s Collaborate <ExternalLink size={18} className="ml-2" />
               </a>
               <button onClick={handleDownloadResume} className="px-6 sm:px-8 py-3.5 sm:py-4 glass-card font-medium hover:bg-white/10 transition-all hover:scale-105 flex items-center justify-center">

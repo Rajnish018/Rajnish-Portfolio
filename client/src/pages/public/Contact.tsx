@@ -184,37 +184,7 @@ export const Contact: React.FC = () => {
               </div>
             </motion.section>
 
-            {/* Socials Grid */}
-            <motion.section
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4 }}
-              className="glass-card p-8 md:p-10"
-            >
-              <h3 className="text-xl md:text-2xl font-display font-bold mb-8">Socials</h3>
-              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-3 md:gap-4">
-                {[
-                  { name: 'LinkedIn', icon: <Linkedin size={18} /> },
-                  { name: 'GitHub', icon: <Github size={18} /> },
-                  { name: 'Dribbble', icon: <Dribbble size={18} /> },
-                  { name: 'Twitter', icon: <Twitter size={18} /> }
-                ].map(social => (
-                  <a
-                    key={social.name}
-                    href="#"
-                    className="flex flex-col items-center justify-center p-4 md:p-6 rounded-2xl bg-white/5 border border-white/5 hover:border-accent/50 hover:bg-white/10 transition-all group"
-                  >
-                    <div className="text-white/40 group-hover:text-accent transition-colors mb-2 md:mb-3">
-                      {social.icon}
-                    </div>
-                    <span className="text-[9px] md:text-[10px] uppercase tracking-widest font-bold text-white/40 group-hover:text-white transition-colors">
-                      {social.name}
-                    </span>
-                  </a>
-                ))}
-              </div>
-            </motion.section>
-
+            
             {/* Image Map Placeholder */}
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}

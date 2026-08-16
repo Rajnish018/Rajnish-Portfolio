@@ -192,7 +192,7 @@ export const Footer: React.FC = () => {
             { icon: <Twitter size={18} />, link: "#" },
             { icon: <Linkedin size={18} />, link: "#" },
             { icon: <Instagram size={18} />, link: "#" },
-            { icon: <Github size={18} />, link: "#" } // Added GitHub here
+            { icon: <Github size={18} />, link: "https://github.com/Rajnish018" } // Added GitHub here
           ].map((social, i) => (
             <a
               key={i}
