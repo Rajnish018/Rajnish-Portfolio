@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Routes, Route, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "motion/react";
 
 // Layouts & UI
 import { Navbar, Footer } from "./components/Layout";
-import { CustomCursor, LoadingScreen } from "./components/UI";
+import { CustomCursor } from "./components/UI";
 import { AdminLayout } from "./components/AdminLayout";
 
 // Pages
@@ -56,31 +56,21 @@ const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) =
 // Main App Content
 // -----------------------------
 const AppContent: React.FC = () => {
-  const [loading, setLoading] = useState(true);
   const location = useLocation();
 
-  useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1200);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Hide Navbar/Footer for admin routes AND the reset password page if preferred
+  // Render the router immediately. Data-dependent pages own their loading
+  // state instead of blocking the entire application behind a timer.
   // Added a check so the public layout drops out for a clean reset interface
   const isAdminRoute = location.pathname.startsWith("/admin") || location.pathname === "/reset-password";
 
   return (
     <>
-      {/* Loading Screen */}
-      <AnimatePresence>{loading && <LoadingScreen />}</AnimatePresence>
+      <CustomCursor />
 
-      {!loading && (
-        <>
-          <CustomCursor />
+      {/* Public/Admin application layout */}
+      {!isAdminRoute && <Navbar />}
 
-          {/* Public Layout */}
-          {!isAdminRoute && <Navbar />}
-
-          <main>
+      <main>
             <Routes>
               {/* ---------------- PUBLIC ROUTES ---------------- */}
               <Route path="/" element={<PageTransition><Home /></PageTransition>} />
@@ -127,12 +117,10 @@ const AppContent: React.FC = () => {
               {/* ---------------- 404 ---------------- */}
               <Route path="*" element={<PageTransition><NotFound /></PageTransition>} />
             </Routes>
-          </main>
+      </main>
 
-          {/* Footer only for public */}
-          {!isAdminRoute && <Footer />}
-        </>
-      )}
+      {/* Footer only for public */}
+      {!isAdminRoute && <Footer />}
     </>
   );
 };

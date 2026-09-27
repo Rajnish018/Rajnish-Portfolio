@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useLayoutEffect } from 'react';
+import React, { useRef, useLayoutEffect } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowRight } from 'lucide-react';
@@ -6,53 +6,15 @@ import { Link } from 'react-router-dom';
 import Hero from '../../../components/Hero';
 import Features from '../../../components/Feature';
 import CTA from '../../../components/Cta';
-import { getProjectsApi } from '@/src/services/apiService';
 import SEO from '@/src/components/SEO';
 import FeaturedProjects from '../../../components/FeaturedProjects';
+import { useProjects } from '../../../hooks/useProjects';
 
 gsap.registerPlugin(ScrollTrigger);
 
 export const Home: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const [projects, setProjects] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const fetchProjects = async () => {
-      try {
-        const cached = sessionStorage.getItem("projectsCache");
-
-        if (cached) {
-          try {
-            const parsed = JSON.parse(cached);
-            if (Array.isArray(parsed) && parsed.length > 0 && mounted) {
-              setProjects(parsed);
-              setLoading(false);
-            }
-          } catch {
-            sessionStorage.removeItem("projectsCache");
-          }
-        }
-
-        const data = await getProjectsApi();
-        if (!mounted) return;
-
-        if (Array.isArray(data)) {
-          setProjects(data);
-          sessionStorage.setItem("projectsCache", JSON.stringify(data));
-        }
-      } catch (error) {
-        console.error("Failed to fetch projects:", error);
-      } finally {
-        if (mounted) setLoading(false);
-      }
-    };
-
-    fetchProjects();
-    return () => { mounted = false; };
-  }, []);
+  const { projects, loading, error, retry } = useProjects();
 
   useLayoutEffect(() => {
   const ctx = gsap.context(() => {
@@ -129,7 +91,12 @@ export const Home: React.FC = () => {
             </Link>
           </div>
 
-          <FeaturedProjects projects={projects.slice(0, 4)} loading={loading} />
+          <FeaturedProjects
+            projects={projects.slice(0, 4)}
+            loading={loading}
+            error={error}
+            onRetry={retry}
+          />
         </section>
 
         <Features />

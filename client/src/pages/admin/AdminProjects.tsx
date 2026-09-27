@@ -24,6 +24,7 @@ import {
   updateProjectApi,
 } from '../../services/apiService';
 import ConfirmModal from '@/src/components/ConfirmModal';
+import { replaceProjectsCache } from '../../hooks/useProjects';
 
 const EMPTY_PROJECT: Project = {
   title: '',
@@ -54,6 +55,7 @@ export const AdminProjects: React.FC = () => {
 const fetchProjects = async () => {
   try {
     const data = await getProjectsApi();
+    replaceProjectsCache(data);
     setProjects(data);
   } catch (err) {
     showToast("Fetch projects error", "error");
@@ -124,7 +126,11 @@ const handleDelete = async () => {
 
   try {
     await deleteProjectApi(deleteId);
-    setProjects(prev => prev.filter(p => p._id !== deleteId));
+    setProjects(prev => {
+      const next = prev.filter(p => p._id !== deleteId);
+      replaceProjectsCache(next);
+      return next;
+    });
     showToast("Project deleted successfully", "success");
   } catch {
     showToast("Failed to delete", "error");
@@ -190,16 +196,22 @@ const handleSave = async (e: React.FormEvent) => {
       // UPDATE
       const updated = await updateProjectApi(isEditing._id, formData);
 
-      setProjects(prev =>
-        prev.map(p => (p._id === updated._id ? updated : p))
-      );
+      setProjects(prev => {
+        const next = prev.map(p => (p._id === updated._id ? updated : p));
+        replaceProjectsCache(next);
+        return next;
+      });
 
       showToast("Project updated successfully", "success");
     } else {
       // CREATE
       const created = await createProjectApi(formData);
 
-      setProjects(prev => [...prev, created]);
+      setProjects(prev => {
+        const next = [created, ...prev];
+        replaceProjectsCache(next);
+        return next;
+      });
 
       showToast("Project created successfully", "success");
     }

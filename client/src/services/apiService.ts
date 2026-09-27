@@ -1,6 +1,7 @@
 import apiClient from "./apiClient";
 import { API_ENDPOINTS } from "./endpoints";
 import axios from "axios";
+import type { Project } from "../types";
 
 // -----------------------------
 // TYPES (IMPORTANT)
@@ -103,13 +104,58 @@ export const changePasswordApi = async (data: ChangePasswordData) => {
 // -----------------------------
 // PROJECTS (FIXED)
 // -----------------------------
-export const getProjectsApi = async () => {
-  const res = await apiClient.get(API_ENDPOINTS.PROJECTS.GET);
-  if (import.meta.env.DEV) {
-    console.log("[projects] GET response:", res.data);
+const PROJECTS_REQUEST_TIMEOUT_MS = 60_000;
+const PROJECTS_RETRY_DELAY_MS = 1_000;
+let projectsRequest: Promise<Project[]> | null = null;
+
+const isTransientProjectsError = (error: unknown) => {
+  if (!error || typeof error !== "object" || !("status" in error)) {
+    return true;
   }
 
-  return res.data;
+  const status = error.status;
+  return typeof status !== "number" || status === 408 || status === 429 || status >= 500;
+};
+
+const fetchProjects = async (): Promise<Project[]> => {
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    try {
+      const res = await apiClient.get<Project[]>(API_ENDPOINTS.PROJECTS.GET, {
+        timeout: PROJECTS_REQUEST_TIMEOUT_MS,
+      });
+
+      if (import.meta.env.DEV) {
+        console.log("[projects] GET response:", res.data);
+      }
+
+      if (!Array.isArray(res.data)) {
+        throw new Error("The project archive returned an invalid response.");
+      }
+
+      return res.data;
+    } catch (error) {
+      if (attempt === 1 || !isTransientProjectsError(error)) {
+        throw error;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, PROJECTS_RETRY_DELAY_MS));
+    }
+  }
+
+  throw new Error("Failed to fetch projects.");
+};
+
+export const getProjectsApi = async (): Promise<Project[]> => {
+  const request = projectsRequest ?? fetchProjects();
+  projectsRequest = request;
+
+  try {
+    return await request;
+  } finally {
+    if (projectsRequest === request) {
+      projectsRequest = null;
+    }
+  }
 };
 
 export const createProjectApi = async (data: any) => {

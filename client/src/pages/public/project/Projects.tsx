@@ -2,62 +2,20 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
 import { ExternalLink, Github, LayoutGrid, Smartphone, Cpu } from 'lucide-react';
 import { Project } from '../../../types';
-import { getProjectsApi } from '@/src/services/apiService';
 import SEO from '@/src/components/SEO';
 import Loader from '@/src/components/Loader';
 import ProjectSlideshow from '../../../components/ProjectSlideshow';
+import { useProjects } from '../../../hooks/useProjects';
 
 export const Projects: React.FC = () => {
-  const [projects, setProjects] = useState<Project[]>([]);
+  const { projects, loading, error, retry } = useProjects();
   const [filter, setFilter] = useState('All');
-  const [loading, setLoading] = useState(true);
   const prefersReducedMotion = useReducedMotion();
 
   // Sliding filter-indicator position, measured from real button positions
   const [indicator, setIndicator] = useState({ left: 0, top: 0, width: 0, height: 0 });
   const filterContainerRef = useRef<HTMLDivElement>(null);
   const buttonRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-
-  useEffect(() => {
-    const fetchProjects = async (suppressLoading = false) => {
-      try {
-        const response = await getProjectsApi();
-        if (import.meta.env.DEV) {
-          console.log("[projects] fetched in component:", response);
-        }
-        setProjects(response);
-        try {
-          sessionStorage.setItem('projectsCache', JSON.stringify(response));
-          sessionStorage.setItem('projectsLoaded', 'true');
-        } catch (e) {
-          // ignore sessionStorage errors
-        }
-      } catch (error) {
-        console.error("Error fetching projects:", error);
-      } finally {
-        if (!suppressLoading) setLoading(false);
-      }
-    };
-
-    try {
-      const cached = sessionStorage.getItem('projectsCache');
-      const loadedFlag = sessionStorage.getItem('projectsLoaded');
-      if (cached) {
-        const parsed = JSON.parse(cached);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setProjects(parsed);
-        }
-      }
-      if (loadedFlag === 'true') {
-        setLoading(false);
-        fetchProjects(true);
-      } else {
-        fetchProjects(false);
-      }
-    } catch (e) {
-      fetchProjects(false);
-    }
-  }, []);
 
   const filteredProjects = filter === 'All'
     ? projects
@@ -233,7 +191,28 @@ export const Projects: React.FC = () => {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8"
         >
           <AnimatePresence mode="popLayout">
-            {filteredProjects.length === 0 ? (
+            {error && projects.length === 0 ? (
+              <motion.div
+                role="alert"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="col-span-full flex flex-col items-center justify-center py-20 text-center px-4"
+              >
+                <p className="text-white/70 text-sm uppercase tracking-widest mb-2 font-bold">
+                  Project Archive Unavailable
+                </p>
+                <p className="text-white/50 text-sm mb-5">
+                  We couldn't connect to the project archive. Please try again.
+                </p>
+                <button
+                  type="button"
+                  onClick={retry}
+                  className="px-5 py-2 rounded-lg bg-accent text-white text-xs font-bold uppercase tracking-widest"
+                >
+                  Retry
+                </button>
+              </motion.div>
+            ) : filteredProjects.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}

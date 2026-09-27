@@ -14,6 +14,8 @@ interface Project {
 interface FeaturedProjectsProps {
   projects: Project[];
   loading: boolean;
+  error?: boolean;
+  onRetry?: () => void;
 }
 
 import ProjectSlideshow from './ProjectSlideshow';
@@ -21,7 +23,7 @@ import ProjectSlideshow from './ProjectSlideshow';
 // 2. Reusable Slideshow Component is extracted to components/ProjectSlideshow.tsx
 
 // 3. Main Featured Projects Component
-const FeaturedProjects: React.FC<FeaturedProjectsProps> = ({ projects, loading }) => {
+const FeaturedProjects: React.FC<FeaturedProjectsProps> = ({ projects, loading, error, onRetry }) => {
   useEffect(() => {
       
   }, [projects]);
@@ -34,6 +36,21 @@ const FeaturedProjects: React.FC<FeaturedProjectsProps> = ({ projects, loading }
   }
 
   if (projects.length === 0) {
+    if (error) {
+      return (
+        <div role="alert" className="flex min-h-[200px] flex-col items-center justify-center gap-4 text-center">
+          <p className="text-white/50 text-sm">We couldn't connect to the project archive.</p>
+          <button
+            type="button"
+            onClick={onRetry}
+            className="px-5 py-2 rounded-lg bg-accent text-white text-xs font-bold uppercase tracking-widest"
+          >
+            Retry
+          </button>
+        </div>
+      );
+    }
+
     return <p className="text-white/20 text-sm italic">Archive is currently empty.</p>;
   }
 
